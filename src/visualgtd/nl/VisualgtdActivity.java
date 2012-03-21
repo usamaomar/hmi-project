@@ -5,6 +5,9 @@ import android.database.Cursor;
 import android.os.Bundle;
 
 public class VisualgtdActivity extends Activity {
+	/**
+	 * Test commit!
+	 */
 	
     private TasksDbAdapter mDbHelper;
 	private Cursor mTaskCursor;
