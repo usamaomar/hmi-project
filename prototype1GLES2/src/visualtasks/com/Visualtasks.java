@@ -1,35 +1,38 @@
 package visualtasks.com;
 
 import java.util.ArrayList;
-import org.anddev.andengine.engine.Engine;
-import org.anddev.andengine.engine.camera.ZoomCamera;
-import org.anddev.andengine.engine.options.EngineOptions;
-import org.anddev.andengine.engine.options.EngineOptions.ScreenOrientation;
-import org.anddev.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
-import org.anddev.andengine.entity.scene.Scene;
-import org.anddev.andengine.entity.scene.Scene.IOnSceneTouchListener;
-import org.anddev.andengine.entity.scene.background.ColorBackground;
-import org.anddev.andengine.entity.sprite.Sprite;
-import org.anddev.andengine.entity.text.ChangeableText;
-import org.anddev.andengine.entity.util.FPSLogger;
-import org.anddev.andengine.extension.input.touch.controller.MultiTouch;
-import org.anddev.andengine.extension.input.touch.controller.MultiTouchController;
-import org.anddev.andengine.extension.input.touch.detector.PinchZoomDetector;
-import org.anddev.andengine.extension.input.touch.detector.PinchZoomDetector.IPinchZoomDetectorListener;
-import org.anddev.andengine.extension.input.touch.exception.MultiTouchException;
-import org.anddev.andengine.input.touch.TouchEvent;
-import org.anddev.andengine.input.touch.detector.HoldDetector;
-import org.anddev.andengine.input.touch.detector.HoldDetector.IHoldDetectorListener;
-import org.anddev.andengine.input.touch.detector.ScrollDetector;
-import org.anddev.andengine.input.touch.detector.ScrollDetector.IScrollDetectorListener;
-import org.anddev.andengine.input.touch.detector.SurfaceScrollDetector;
-import org.anddev.andengine.opengl.font.Font;
-import org.anddev.andengine.opengl.texture.TextureOptions;
-import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
-import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
-import org.anddev.andengine.opengl.texture.region.TextureRegion;
-import org.anddev.andengine.ui.activity.BaseGameActivity;
-import org.anddev.andengine.util.HorizontalAlign;
+
+import org.andengine.engine.Engine;
+import org.andengine.engine.camera.ZoomCamera;
+import org.andengine.engine.options.EngineOptions;
+import org.andengine.engine.options.EngineOptions.ScreenOrientation;
+import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
+import org.andengine.entity.scene.IOnSceneTouchListener;
+import org.andengine.entity.scene.Scene;
+import org.andengine.entity.scene.background.Background;
+import org.andengine.entity.sprite.Sprite;
+import org.andengine.entity.text.AutoWrap;
+import org.andengine.entity.text.Text;
+import org.andengine.entity.text.TextOptions;
+import org.andengine.entity.util.FPSLogger;
+import org.andengine.input.touch.TouchEvent;
+import org.andengine.input.touch.detector.HoldDetector;
+import org.andengine.input.touch.detector.HoldDetector.IHoldDetectorListener;
+import org.andengine.input.touch.detector.PinchZoomDetector;
+import org.andengine.input.touch.detector.PinchZoomDetector.IPinchZoomDetectorListener;
+import org.andengine.input.touch.detector.ScrollDetector;
+import org.andengine.input.touch.detector.ScrollDetector.IScrollDetectorListener;
+import org.andengine.input.touch.detector.SurfaceScrollDetector;
+import org.andengine.opengl.font.Font;
+import org.andengine.opengl.font.FontFactory;
+import org.andengine.opengl.texture.TextureOptions;
+import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
+import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
+import org.andengine.opengl.texture.region.ITextureRegion;
+import org.andengine.opengl.texture.region.TextureRegion;
+import org.andengine.opengl.vbo.VertexBufferObjectManager;
+import org.andengine.ui.activity.SimpleBaseGameActivity;
+import org.andengine.util.HorizontalAlign;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -39,69 +42,39 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.EditText;
-import android.widget.Toast;
 
-public class Visualtasks extends BaseGameActivity implements
-		IOnSceneTouchListener, IScrollDetectorListener,
-		IPinchZoomDetectorListener, IHoldDetectorListener {
+public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouchListener, IScrollDetectorListener, IPinchZoomDetectorListener, IHoldDetectorListener{
 	// ===========================================================
 	// Constants
 	// ===========================================================
 
-	private static final int CAMERA_HEIGHT = 720;
-	private static final int CAMERA_WIDTH = 1080;
+	private static final float CAMERA_HEIGHT = 720;
+	private static final float CAMERA_WIDTH = 1080;
 	private static final int TRIGGER_HOLD_MIN_MILISECONDS = 500;
 
 	// ===========================================================
 	// Fields
 	// ===========================================================
 
-	// wrap text within boundaries
-	public static String getNormalizedText(Font font, String ptext,
-			float textWidth) {
-		// no need to normalize, its just one word, so return
-		if (!ptext.contains(" "))
-			return ptext;
-		String[] words = ptext.split(" ");
-		StringBuilder normalizedText = new StringBuilder();
-		StringBuilder line = new StringBuilder();
-
-		for (int i = 0; i < words.length; i++) {
-			if (font.getStringWidth((line + words[i])) > (textWidth)) {
-				normalizedText.append(line).append('\n');
-				line = new StringBuilder();
-			}
-
-			if (line.length() == 0)
-				line.append(words[i]);
-			else
-				line.append(' ').append(words[i]);
-
-			if (i == words.length - 1)
-				normalizedText.append(line);
-		}
-		return normalizedText.toString();
-	}
+	
 
 	private BitmapTextureAtlas mBackgroundTextureAtlas;
-	private TextureRegion mBackgroundTextureRegion;
 	private BitmapTextureAtlas mBitmapTextureAtlas;
-	private TextureRegion mFaceTextureRegion;
 	private Font mFont;
 	private BitmapTextureAtlas mFontTexture;
 	private HoldDetector mHoldDetector;
 	private PinchZoomDetector mPinchZoomDetector;
 	private float mPinchZoomStartedCameraZoomFactor;
-	// private Camera mCamera;
 	private Scene mScene;
+	// private Camera mCamera;
 	private SurfaceScrollDetector mScrollDetector;
 	private ArrayList<TaskSprite> mTasksList = new ArrayList<TaskSprite>();
-	private TextureRegion mTaskTextureRegion;
 
 	// ===========================================================
 	// Constructors
 	// ===========================================================
 
+	private ITextureRegion mTaskTextureRegion;
 	private ZoomCamera mZoomCamera;
 
 	// ===========================================================
@@ -117,128 +90,120 @@ public class Visualtasks extends BaseGameActivity implements
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.menu, menu);
-		return true;
+	public Engine onCreateEngine(EngineOptions pEngineOptions) {
+		// TODO Auto-generated method stub
+		
+		return super.onCreateEngine(pEngineOptions);
 	}
 
-	@Override
-	public void onHold(HoldDetector arg0, long arg1, final float arg2,
-			final float arg3) {
+	
 
-	}
-
-	@Override
-	public void onHoldFinished(HoldDetector arg0, long arg1, final float arg2,
-			final float arg3) {
-		runOnUiThread(new Runnable() {
-
-			@Override
-			public void run() {
-				mHoldDetector.setEnabled(false);
-				showPopUp(arg2, arg3);
-				mHoldDetector.setEnabled(true);
-			}
-		});
-
-	}
+//	@Override
+//	public void onHoldFinished(HoldDetector arg0, long arg1, final float arg2,
+//			final float arg3) {
+//		runOnUiThread(new Runnable() {
+//
+//			@Override
+//			public void run() {
+//				mHoldDetector.setEnabled(false);
+//				showPopUp(arg2, arg3);
+//				mHoldDetector.setEnabled(true);
+//			}
+//		});
+//
+//	}
 
 	@Override
-	public void onLoadComplete() {
-
+	public EngineOptions onCreateEngineOptions() {
+		this.mZoomCamera = new ZoomCamera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
+		final EngineOptions engineOptions = new EngineOptions(true,
+				ScreenOrientation.LANDSCAPE_FIXED, new RatioResolutionPolicy(
+						CAMERA_WIDTH, CAMERA_HEIGHT), this.mZoomCamera);
+		engineOptions.getTouchOptions().setNeedsMultiTouch(true);
+		
+		return engineOptions;
+		
 	}
 
 	// Methods for menu
 
 	@Override
-	public Engine onLoadEngine() {
-
-		this.mZoomCamera = new ZoomCamera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
-		final Engine engine = new Engine(new EngineOptions(true,
-				ScreenOrientation.LANDSCAPE, new RatioResolutionPolicy(
-						CAMERA_WIDTH, CAMERA_HEIGHT), this.mZoomCamera));
-
-		try {
-			if (MultiTouch.isSupported(this)) {
-				engine.setTouchController(new MultiTouchController());
-			} else {
-				Toast.makeText(
-						this,
-						"Sorry your device does NOT support MultiTouch!\n\n(No PinchZoom is possible!)",
-						Toast.LENGTH_LONG).show();
-			}
-		} catch (final MultiTouchException e) {
-			Toast.makeText(
-					this,
-					"Sorry your Android Version does NOT support MultiTouch!\n\n(No PinchZoom is possible!)",
-					Toast.LENGTH_LONG).show();
-		}
-
-		return engine;
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.menu, menu);
+		return true;
 	}
-
 	@Override
-	public void onLoadResources() {
-		this.mBitmapTextureAtlas = new BitmapTextureAtlas(512, 512,
-				TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		this.mFontTexture = new BitmapTextureAtlas(512, 512,
-				TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		this.mFont = new Font(this.mFontTexture, Typeface.create(
-				Typeface.DEFAULT, Typeface.BOLD), 56, true, Color.WHITE);
-
-		this.mBackgroundTextureAtlas = new BitmapTextureAtlas(2048, 1024,
-				TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-
+	protected void onCreateResources() {
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
-		this.mTaskTextureRegion = BitmapTextureAtlasTextureRegionFactory
-				.createFromAsset(this.mBitmapTextureAtlas, this, "bubble.png",
-						0, 0);
-		this.mBackgroundTextureRegion = BitmapTextureAtlasTextureRegionFactory
-				.createFromAsset(this.mBackgroundTextureAtlas, this,
-						"achtergrond1.png", 0, 0);
-		this.mEngine.getTextureManager().loadTextures(this.mBitmapTextureAtlas,
-				this.mFontTexture);
-		this.mEngine.getFontManager().loadFont(this.mFont);
+		
+		this.mBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(),512, 512, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		this.mTaskTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mBitmapTextureAtlas, this, "bubble.png",0, 0);
+		this.mBitmapTextureAtlas.load();
+		
+		//load font 
+		this.mFont = FontFactory.create(this.getFontManager(), this.getTextureManager(), 256, 256, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 56, true, Color.WHITE);
+		this.mFont.load();
+		
+		//this.mBackgroundTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(),2048, 1024,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 
 	}
 
 	@Override
-	public Scene onLoadScene() {
-
+	protected Scene onCreateScene() {
 		this.mEngine.registerUpdateHandler(new FPSLogger());
 
 		this.mScene = new Scene();
 		this.mScene.setOnAreaTouchTraversalFrontToBack();
-		this.mScene.setBackground(new ColorBackground(0.09804f, 0.6274f,
-				0.8784f));
+		
+		this.mScene.setBackground(new Background(0.09804f, 0.6274f,0.8784f));
 		// Sprite backgroundSprite = new Sprite(0,0,this.CAMERA_WIDTH,
 		// this.CAMERA_HEIGHT, mBackgroundTextureRegion);
 
 		// this.mScene.setBackground(new SpriteBackground(backgroundSprite));
 
+		this.mScene.setTouchAreaBindingOnActionDownEnabled(true);
 		this.mScrollDetector = new SurfaceScrollDetector(this);
+		this.mPinchZoomDetector = new PinchZoomDetector(this);
 		this.mHoldDetector = new HoldDetector(this);
-		this.mHoldDetector
-				.setTriggerHoldMinimumMilliseconds(TRIGGER_HOLD_MIN_MILISECONDS);
-		this.mScene.registerUpdateHandler(mHoldDetector);
+		this.mHoldDetector.setTriggerHoldMinimumMilliseconds(TRIGGER_HOLD_MIN_MILISECONDS);
+		//this.mScene.registerUpdateHandler(mHoldDetector);
 
-		if (MultiTouch.isSupportedByAndroidVersion()) {
-			try {
-				this.mPinchZoomDetector = new PinchZoomDetector(this);
-			} catch (final MultiTouchException e) {
-				this.mPinchZoomDetector = null;
-			}
-		} else {
-			this.mPinchZoomDetector = null;
-		}
 		this.mScene.setOnSceneTouchListener(this);
+//
 
-		this.mScene.setTouchAreaBindingEnabled(true);
 
 		return this.mScene;
-
 	}
+
+	
+
+
+	@Override
+	public void onHold(HoldDetector pHoldDetector, long pHoldTimeMilliseconds,
+			int pPointerID, float pHoldX, float pHoldY) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onHoldFinished(HoldDetector pHoldDetector,
+			long pHoldTimeMilliseconds, int pPointerID, float pHoldX,
+			float pHoldY) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onHoldStarted(HoldDetector pHoldDetector, int pPointerID,
+			float pHoldX, float pHoldY) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	// ===========================================================
+	// Inner and Anonymous Classes
+	// ===========================================================
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -251,34 +216,7 @@ public class Visualtasks extends BaseGameActivity implements
 		return true;
 	}
 
-	@Override
-	public void onPinchZoom(final PinchZoomDetector pPinchZoomDetector,
-			final TouchEvent pTouchEvent, final float pZoomFactor) {
-		
-			this.mZoomCamera
-					.setZoomFactor(this.mPinchZoomStartedCameraZoomFactor
-							* pZoomFactor);
-		
-	}
-
-	@Override
-	public void onPinchZoomFinished(final PinchZoomDetector pPinchZoomDetector,
-			final TouchEvent pTouchEvent, final float pZoomFactor) {
-		
-			this.mZoomCamera
-					.setZoomFactor(this.mPinchZoomStartedCameraZoomFactor
-							* pZoomFactor);
-		
-	}
-
-	@Override
-	public void onPinchZoomStarted(final PinchZoomDetector pPinchZoomDetector,
-			final TouchEvent pTouchEvent) {
-
-		this.mPinchZoomStartedCameraZoomFactor = this.mZoomCamera
-				.getZoomFactor();
-
-	}
+	
 
 	@Override
 	public boolean onSceneTouchEvent(final Scene pScene,
@@ -308,29 +246,45 @@ public class Visualtasks extends BaseGameActivity implements
 	}
 
 	@Override
-	public void onScroll(final ScrollDetector pScollDetector,
-			final TouchEvent pTouchEvent, final float pDistanceX,
-			final float pDistanceY) {
-		synchronized (this.mZoomCamera) {
-			final float zoomFactor = this.mZoomCamera.getZoomFactor();
-			this.mZoomCamera.offsetCenter(-pDistanceX / zoomFactor, -pDistanceY
-					/ zoomFactor);
-		}
+	public void onScrollStarted(final ScrollDetector pScollDetector, final int pPointerID, final float pDistanceX, final float pDistanceY) {
+		final float zoomFactor = this.mZoomCamera.getZoomFactor();
+		this.mZoomCamera.offsetCenter(-pDistanceX / zoomFactor, -pDistanceY / zoomFactor);
 	}
 
-	// ===========================================================
-	// Inner and Anonymous Classes
-	// ===========================================================
+	@Override
+	public void onScroll(final ScrollDetector pScollDetector, final int pPointerID, final float pDistanceX, final float pDistanceY) {
+		final float zoomFactor = this.mZoomCamera.getZoomFactor();
+		this.mZoomCamera.offsetCenter(-pDistanceX / zoomFactor, -pDistanceY / zoomFactor);
+	}
+	
+	@Override
+	public void onScrollFinished(final ScrollDetector pScollDetector, final int pPointerID, final float pDistanceX, final float pDistanceY) {
+		final float zoomFactor = this.mZoomCamera.getZoomFactor();
+		this.mZoomCamera.offsetCenter(-pDistanceX / zoomFactor, -pDistanceY / zoomFactor);
+	}
+
+	@Override
+	public void onPinchZoomStarted(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent) {
+		this.mPinchZoomStartedCameraZoomFactor = this.mZoomCamera.getZoomFactor();
+	}
+
+	@Override
+	public void onPinchZoom(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
+		this.mZoomCamera.setZoomFactor(this.mPinchZoomStartedCameraZoomFactor * pZoomFactor);
+	}
+
+	@Override
+	public void onPinchZoomFinished(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
+		this.mZoomCamera.setZoomFactor(this.mPinchZoomStartedCameraZoomFactor * pZoomFactor);
+	}
 
 	private void showPopUp() {
-		final int centerX = (CAMERA_WIDTH - this.mTaskTextureRegion.getWidth()) / 2;
-		final int centerY = (CAMERA_HEIGHT - this.mTaskTextureRegion
-				.getHeight()) / 2;
+		final float centerX = (CAMERA_WIDTH - this.mTaskTextureRegion.getWidth()) / 2f;
+		final float centerY = (CAMERA_HEIGHT - this.mTaskTextureRegion.getHeight()) / 2f;
 		this.showPopUp(centerX, centerY);
 	}
 
 	private void showPopUp(final float pX, final float pY) {
-
 		AlertDialog.Builder helpBuilder = new AlertDialog.Builder(this);
 		helpBuilder.setTitle("Choose title");
 		final EditText input = new EditText(this);
@@ -352,6 +306,27 @@ public class Visualtasks extends BaseGameActivity implements
 		// Remember, create doesn't show the dialog
 		AlertDialog helpDialog = helpBuilder.create();
 		helpDialog.show();
+//		new StringInputDialogBuilder(this,
+//			    R.string.dialog_task_new_title,
+//			    R.string.dialog_task_new_message,
+//			    R.string.dialog_task_new_message,
+//			    android.R.drawable.ic_dialog_info,
+//			    new Callback<String>() {
+//										
+//					@Override
+//					public void onCallback(String pCallbackValue) {
+//						spawnTask(pCallbackValue, pX, pY);
+//						
+//					}
+//			
+//			},   new OnCancelListener() {
+//
+//				@Override
+//				public void onCancel(DialogInterface arg0) {
+//					// nothing
+//					
+//				}}
+//			).create();
 	}
 
 	// ===========================================================
@@ -359,18 +334,18 @@ public class Visualtasks extends BaseGameActivity implements
 	// ===========================================================
 	public void spawnTask(String name, float pX, float pY) {
 
-		final TaskSprite sprite = new TaskSprite(0, 0, mFont,
-				mTaskTextureRegion);
+		final TaskSprite sprite = new TaskSprite(name,0, 0, mFont,
+				mTaskTextureRegion, this.getVertexBufferObjectManager());
 		sprite.setPosition(pX - sprite.getWidth() / 2f, pY - sprite.getHeight()
 				/ 2f);
 
-		sprite.setText(name);
+		//sprite.setText(name);
 
 		mTasksList.add(0, sprite);
 
 		this.mScene.attachChild(sprite);
 		this.mScene.registerTouchArea(sprite);
-		this.mScene.setTouchAreaBindingEnabled(true);
+		this.mScene.setTouchAreaBindingOnActionMoveEnabled(true);
 	}
 
 	class TaskSprite extends Sprite {
@@ -385,18 +360,20 @@ public class Visualtasks extends BaseGameActivity implements
 
 		private final Font mFont;
 		private float mScaleX, mScaleY;
-		private ChangeableText mText;
+		private Text mText;
 		private Integer touchingID = INVALID_TOUCHING_ID;
 		private Integer touchingID2 = INVALID_TOUCHING_ID;
 
-		public TaskSprite(float pX, float pY, Font pFont,
-				TextureRegion pTextureRegion) {
-			super(pX, pY, pTextureRegion);
+		public TaskSprite(String text, float pX, float pY, Font pFont,ITextureRegion pTextureRegion, VertexBufferObjectManager vBOM) {
+			super(pX,pY,pTextureRegion, vBOM);
 			this.mFont = pFont;
-			this.mText = new ChangeableText(0, 0, pFont, "Task",
-					HorizontalAlign.CENTER, MAX_CHARACTERS);
+			
+			this.mText = new Text(0, 0, this.mFont, text,	new TextOptions(AutoWrap.LETTERS, this.getWidth(), 4, HorizontalAlign.CENTER),vBOM);
+			
+			mText.setPosition(this.getWidth() / 2f - mText.getWidth() / 2f,	this.getHeight() / 2f - mText.getHeight() / 2f);
 			this.attachChild(mText);
 			this.setScale(START_SCALE);
+			
 
 		}
 
@@ -427,9 +404,7 @@ public class Visualtasks extends BaseGameActivity implements
 			}
 		}
 
-		public String getText() {
-			return this.mText.getText();
-		}
+	
 
 		@Override
 		public boolean onAreaTouched(TouchEvent pSceneTouchEvent,
@@ -509,18 +484,14 @@ public class Visualtasks extends BaseGameActivity implements
 
 			return true;
 		}
-
-		public void setText(String pText) {
-			this.mText.setText(getNormalizedText(mFont, pText, this.getWidth()
-					- 2 * TEXT_PADDING));
-			mText.setPosition(this.getWidth() / 2f - mText.getWidth() / 2f,
-					this.getHeight() / 2f - mText.getHeight() / 2f);
-		}
-
-		private void setTouched() {
-
+		
+		private void updateTextPosition(){
+			
+			
 		}
 
 	}
+
+
 
 }
