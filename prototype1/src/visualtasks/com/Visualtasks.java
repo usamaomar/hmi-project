@@ -254,21 +254,21 @@ public class Visualtasks extends BaseGameActivity implements
 	@Override
 	public void onPinchZoom(final PinchZoomDetector pPinchZoomDetector,
 			final TouchEvent pTouchEvent, final float pZoomFactor) {
-		synchronized (this.mZoomCamera) {
+		
 			this.mZoomCamera
 					.setZoomFactor(this.mPinchZoomStartedCameraZoomFactor
 							* pZoomFactor);
-		}
+		
 	}
 
 	@Override
 	public void onPinchZoomFinished(final PinchZoomDetector pPinchZoomDetector,
 			final TouchEvent pTouchEvent, final float pZoomFactor) {
-		synchronized (this.mZoomCamera) {
+		
 			this.mZoomCamera
 					.setZoomFactor(this.mPinchZoomStartedCameraZoomFactor
 							* pZoomFactor);
-		}
+		
 	}
 
 	@Override
