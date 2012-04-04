@@ -29,19 +29,22 @@ import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.andengine.opengl.texture.region.ITextureRegion;
-import org.andengine.opengl.texture.region.TextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
+import org.andengine.ui.dialog.StringInputDialogBuilder;
 import org.andengine.util.HorizontalAlign;
+import org.andengine.util.call.Callback;
 
-import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.EditText;
 
 public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouchListener, IScrollDetectorListener, IPinchZoomDetectorListener, IHoldDetectorListener{
 	// ===========================================================
@@ -182,7 +185,7 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 	@Override
 	public void onHold(HoldDetector pHoldDetector, long pHoldTimeMilliseconds,
 			int pPointerID, float pHoldX, float pHoldY) {
-		// TODO Auto-generated method stub
+		
 		
 	}
 
@@ -190,14 +193,15 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 	public void onHoldFinished(HoldDetector pHoldDetector,
 			long pHoldTimeMilliseconds, int pPointerID, float pHoldX,
 			float pHoldY) {
-		// TODO Auto-generated method stub
-		
+		pHoldDetector.setEnabled(false);
+		showPopUp(pHoldX, pHoldY);
+		pHoldDetector.setEnabled(true);
 	}
 
 	@Override
 	public void onHoldStarted(HoldDetector pHoldDetector, int pPointerID,
 			float pHoldX, float pHoldY) {
-		// TODO Auto-generated method stub
+		
 		
 	}
 
@@ -285,50 +289,36 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 	}
 
 	private void showPopUp(final float pX, final float pY) {
-		AlertDialog.Builder helpBuilder = new AlertDialog.Builder(this);
-		helpBuilder.setTitle("Choose title");
-		final EditText input = new EditText(this);
-		input.setSingleLine();
-		input.setText("");
-		helpBuilder.setView(input);
-		helpBuilder.setPositiveButton("Ok",
-				new DialogInterface.OnClickListener() {
+		final Context context = this;
+		this.runOnUiThread(new Runnable(){
+			
+			@Override
+			public void run() {
+				Dialog dialog = new StringInputDialogBuilder(context,R.string.dialog_task_new_title,0,
+					    R.string.dialog_task_new_message, android.R.drawable.ic_dialog_info,
+					    new Callback<String>() {
+												
+							@Override
+							public void onCallback(String pCallbackValue) {
+								spawnTask(pCallbackValue, pX, pY);
+								
+							}
+					
+					},   new OnCancelListener() {
 
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						String name = input.getText().toString();
-						spawnTask(name, pX, pY);
-						// Toast.makeText(example, "Title is: " + name,
-						// Toast.LENGTH_LONG).show();
-					}
-				});
-
-		// Remember, create doesn't show the dialog
-		AlertDialog helpDialog = helpBuilder.create();
-		helpDialog.show();
-//		new StringInputDialogBuilder(this,
-//			    R.string.dialog_task_new_title,
-//			    R.string.dialog_task_new_message,
-//			    R.string.dialog_task_new_message,
-//			    android.R.drawable.ic_dialog_info,
-//			    new Callback<String>() {
-//										
-//					@Override
-//					public void onCallback(String pCallbackValue) {
-//						spawnTask(pCallbackValue, pX, pY);
-//						
-//					}
-//			
-//			},   new OnCancelListener() {
-//
-//				@Override
-//				public void onCancel(DialogInterface arg0) {
-//					// nothing
-//					
-//				}}
-//			).create();
+						@Override
+						public void onCancel(DialogInterface arg0) {
+							// nothing
+							
+						}}
+					).create();
+				dialog.show();
+				
+			}});
+		
 	}
-
+	
+	
 	// ===========================================================
 	// Methods
 	// ===========================================================
@@ -345,18 +335,15 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 
 		this.mScene.attachChild(sprite);
 		this.mScene.registerTouchArea(sprite);
-		this.mScene.setTouchAreaBindingOnActionMoveEnabled(true);
 	}
 
 	class TaskSprite extends Sprite {
 		private final static int INVALID_TOUCHING_ID = -1;
 
-		private final static int MAX_CHARACTERS = 50;
-		private final static int MAX_LINES = 3;
+	
 		private final static float START_SCALE = 0.5f;
-		private final static int TEXT_PADDING = 8;
 		private float dX, dY, dX2, dY2;
-		private boolean isZooming, isTouched, isLongTouching;
+		private boolean isZooming, isTouched;
 
 		private final Font mFont;
 		private float mScaleX, mScaleY;
@@ -368,7 +355,7 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 			super(pX,pY,pTextureRegion, vBOM);
 			this.mFont = pFont;
 			
-			this.mText = new Text(0, 0, this.mFont, text,	new TextOptions(AutoWrap.LETTERS, this.getWidth(), 4, HorizontalAlign.CENTER),vBOM);
+			this.mText = new Text(0, 0, this.mFont, text,	new TextOptions(AutoWrap.WORDS, this.getWidth(), 4, HorizontalAlign.CENTER),vBOM);
 			
 			mText.setPosition(this.getWidth() / 2f - mText.getWidth() / 2f,	this.getHeight() / 2f - mText.getHeight() / 2f);
 			this.attachChild(mText);
@@ -379,24 +366,7 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 
 		private void bringToTop() {
 			synchronized (mTasksList) {
-				// mTasksList.remove(this);
-				// mTasksList.add(this);
-				// this.getParent().sortChildren(new Comparator<IEntity>(){
-				//
-				// @Override
-				// public int compare(IEntity arg0, IEntity arg1) {
-				// if (arg0 instanceof TaskSprite && arg1 instanceof
-				// TaskSprite){
-				// Integer i0 = mTasksList.indexOf((TaskSprite) arg0);
-				// Integer i1 = mTasksList.indexOf((TaskSprite) arg1);
-				// return i0.compareTo(i1);
-				// }
-				// return 0;
-				// }
-				//
-				// });
-
-				mScene.detachChild(this);
+			    mScene.detachChild(this);
 				mScene.unregisterTouchArea(this);
 				mScene.attachChild(this);
 				mScene.registerTouchArea(this);
@@ -418,8 +388,6 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 						dY = pSceneTouchEvent.getY() - this.getY();
 						touchingID = pSceneTouchEvent.getPointerID();
 						isTouched = true;
-						isLongTouching = true;
-
 						this.bringToTop();// sort all tasks again
 						this.mScaleX = this.getScaleX();
 						this.mScaleY = this.getScaleY();
@@ -491,7 +459,8 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 		}
 
 	}
-
+	
+	
 
 
 }
