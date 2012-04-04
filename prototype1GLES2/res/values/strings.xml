@@ -4,6 +4,6 @@
     <string name="hello">Hello World, Visualtasks!</string>
     <string name="app_name">Done!</string>
     <string name="dialog_task_new_title">Add new task</string>
-    <string name="dialog_task_new_message">Add new task</string>
+    <string name="dialog_task_new_message"></string>
 
 </resources>
