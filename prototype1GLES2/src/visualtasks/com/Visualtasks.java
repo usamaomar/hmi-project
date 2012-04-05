@@ -9,7 +9,8 @@ import org.andengine.engine.options.EngineOptions.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
-import org.andengine.entity.scene.background.Background;
+import org.andengine.entity.scene.background.AutoParallaxBackground;
+import org.andengine.entity.scene.background.ParallaxBackground.ParallaxEntity;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.AutoWrap;
 import org.andengine.entity.text.Text;
@@ -41,7 +42,6 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -72,6 +72,8 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 	// private Camera mCamera;
 	private SurfaceScrollDetector mScrollDetector;
 	private ArrayList<TaskSprite> mTasksList = new ArrayList<TaskSprite>();
+	private ITextureRegion mParallaxLayerFront;
+	private BitmapTextureAtlas mAutoParallaxBackgroundTexture;
 
 	// ===========================================================
 	// Constructors
@@ -79,6 +81,9 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 
 	private ITextureRegion mTaskTextureRegion;
 	private ZoomCamera mZoomCamera;
+	private ITextureRegion mBgTexture;
+    private BitmapTextureAtlas mBackgroundTexture;
+    private ITextureRegion mBackgroundTextureRegion;
 
 	// ===========================================================
 	// Getter & Setter
@@ -148,8 +153,10 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 		this.mFont = FontFactory.create(this.getFontManager(), this.getTextureManager(), 256, 256, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 56, true, Color.WHITE);
 		this.mFont.load();
 		
-		//this.mBackgroundTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(),2048, 1024,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-
+		//load background
+		this.mAutoParallaxBackgroundTexture = new BitmapTextureAtlas(this.getTextureManager(), 2048, 2048, TextureOptions.DEFAULT);
+		this.mParallaxLayerFront = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mAutoParallaxBackgroundTexture, this, "achtergrond1.png", 0, 0);
+		mAutoParallaxBackgroundTexture.load();
 	}
 
 	@Override
@@ -159,11 +166,12 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 		this.mScene = new Scene();
 		this.mScene.setOnAreaTouchTraversalFrontToBack();
 		
-		this.mScene.setBackground(new Background(0.09804f, 0.6274f,0.8784f));
-		// Sprite backgroundSprite = new Sprite(0,0,this.CAMERA_WIDTH,
-		// this.CAMERA_HEIGHT, mBackgroundTextureRegion);
-
-		// this.mScene.setBackground(new SpriteBackground(backgroundSprite));
+		//bg stuff
+		final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
+		final AutoParallaxBackground autoParallaxBackground = new AutoParallaxBackground(0, 0, 0, 5);
+		autoParallaxBackground.attachParallaxEntity(new ParallaxEntity(-10.0f, new Sprite(0, CAMERA_HEIGHT - this.mParallaxLayerFront.getHeight(), this.mParallaxLayerFront, vertexBufferObjectManager)));
+		this.mScene.attachChild(new Sprite(0, CAMERA_HEIGHT - this.mParallaxLayerFront.getHeight(), this.mParallaxLayerFront, vertexBufferObjectManager));
+		//end bg stuff
 
 		this.mScene.setTouchAreaBindingOnActionDownEnabled(true);
 		this.mScrollDetector = new SurfaceScrollDetector(this);
