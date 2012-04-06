@@ -5,5 +5,7 @@
     <string name="app_name">Done!</string>
     <string name="dialog_task_new_title">Add new task</string>
     <string name="dialog_task_new_message"></string>
+    <string name="dialog_edit_task">What would you like to edit?</string>
+    <string name="dialog_edit_new_message"></string>
 
 </resources>
