@@ -36,12 +36,14 @@ import org.andengine.ui.dialog.StringInputDialogBuilder;
 import org.andengine.util.HorizontalAlign;
 import org.andengine.util.call.Callback;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.os.SystemClock;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -74,6 +76,8 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 	private ArrayList<TaskSprite> mTasksList = new ArrayList<TaskSprite>();
 	private ITextureRegion mParallaxLayerFront;
 	private BitmapTextureAtlas mAutoParallaxBackgroundTexture;
+	private VertexBufferObjectManager vB;
+	private int completeTask = 0;
 
 	// ===========================================================
 	// Constructors
@@ -181,8 +185,6 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 		//this.mScene.registerUpdateHandler(mHoldDetector);
 
 		this.mScene.setOnSceneTouchListener(this);
-//
-
 
 		return this.mScene;
 	}
@@ -191,26 +193,23 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 
 
 	@Override
-	public void onHold(HoldDetector pHoldDetector, long pHoldTimeMilliseconds,
-			int pPointerID, float pHoldX, float pHoldY) {
-		
+	public void onHold(HoldDetector pHoldDetector, long pHoldTimeMilliseconds, int pPointerID, float pHoldX, float pHoldY) {
 		
 	}
 
 	@Override
-	public void onHoldFinished(HoldDetector pHoldDetector,
-			long pHoldTimeMilliseconds, int pPointerID, float pHoldX,
-			float pHoldY) {
+	public void onHoldFinished(HoldDetector pHoldDetector, long pHoldTimeMilliseconds, int pPointerID, float pHoldX, float pHoldY) {
+		//verplaatst naar onHoldStarted(), vond ik logischer
+		/**pHoldDetector.setEnabled(false);
+		showPopUp(pHoldX, pHoldY);
+		pHoldDetector.setEnabled(true);**/
+	}
+
+	@Override
+	public void onHoldStarted(HoldDetector pHoldDetector, int pPointerID, float pHoldX, float pHoldY) {
 		pHoldDetector.setEnabled(false);
 		showPopUp(pHoldX, pHoldY);
 		pHoldDetector.setEnabled(true);
-	}
-
-	@Override
-	public void onHoldStarted(HoldDetector pHoldDetector, int pPointerID,
-			float pHoldX, float pHoldY) {
-		
-		
 	}
 
 	// ===========================================================
@@ -326,14 +325,66 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 		
 	}
 	
+	/**
+	 * Option menu after double tapping on task
+	 * @param task The task to be edited
+	 */
+	private void contextMenu(final TaskSprite task) {
+		final Context context = this;
+		this.runOnUiThread(new Runnable(){
+			
+			@Override
+			public void run() {
+				AlertDialog.Builder menu = new AlertDialog.Builder(context);
+				//builder.setIcon(R.drawable.dialog_question);
+				menu.setTitle(R.string.dialog_edit_task);
+				menu.setInverseBackgroundForced(true);
+				
+				menu.setPositiveButton("Name", new DialogInterface.OnClickListener() {
+
+						    public void onClick(DialogInterface dialog, int which) {
+						    	//nieuwe naam moet weer met dialog maar dit is voor test
+						    	// dus hier weer nieuw dialog met edit text field en ok knop.
+						    	task.editName("new name");
+						    	}
+						   });
+
+				menu.setNegativeButton("Complete", new DialogInterface.OnClickListener() {
+						  //Eerste heette dit Finish, weet niet welke benaming beter is.
+						  @Override
+						  public void onClick(DialogInterface dialog, int which) {
+								mTasksList.remove(task);
+								//show message: task.getName() has been finished!
+								mScene.detachChild(task);
+								completeTask++; //voor achievements oid
+						  }
+						 });
+						 
+				menu.setNeutralButton("Priority", new DialogInterface.OnClickListener() {
+
+						  @Override
+						  public void onClick(DialogInterface dialog, int which) {
+							// Do nothing but close the dialog
+							// weet nog niet hoe we dit gaan doen (mogelijkheid via slider? als pinch niet goed lukt)
+						  }
+						 });
+				
+				AlertDialog cMenu = menu.create();
+				cMenu.show();
+			}});
+		
+	}
+	
 	
 	// ===========================================================
 	// Methods
 	// ===========================================================
 	public void spawnTask(String name, float pX, float pY) {
+		
+		vB = this.getVertexBufferObjectManager();
 
 		final TaskSprite sprite = new TaskSprite(name,0, 0, mFont,
-				mTaskTextureRegion, this.getVertexBufferObjectManager());
+				mTaskTextureRegion, vB);
 		sprite.setPosition(pX - sprite.getWidth() / 2f, pY - sprite.getHeight()
 				/ 2f);
 
@@ -344,10 +395,20 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 		this.mScene.attachChild(sprite);
 		this.mScene.registerTouchArea(sprite);
 	}
+	
+	
+	
+	/**
+	 * 
+	 * 
+	 * Inner class TaskSprite
+	 * 
+	 *
+	 **/
+	
 
-	class TaskSprite extends Sprite {
+	class TaskSprite extends Sprite{
 		private final static int INVALID_TOUCHING_ID = -1;
-
 	
 		private final static float START_SCALE = 0.5f;
 		private float dX, dY, dX2, dY2;
@@ -358,6 +419,12 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 		private Text mText;
 		private Integer touchingID = INVALID_TOUCHING_ID;
 		private Integer touchingID2 = INVALID_TOUCHING_ID;
+		
+		private long thisTime = 0;
+		private long prevTime = 0;
+		private boolean firstTap = true;
+		protected static final long DOUBLE_CLICK_MAX_DELAY = 1000L;
+		
 
 		public TaskSprite(String text, float pX, float pY, Font pFont,ITextureRegion pTextureRegion, VertexBufferObjectManager vBOM) {
 			super(pX,pY,pTextureRegion, vBOM);
@@ -368,7 +435,6 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 			mText.setPosition(this.getWidth() / 2f - mText.getWidth() / 2f,	this.getHeight() / 2f - mText.getHeight() / 2f);
 			this.attachChild(mText);
 			this.setScale(START_SCALE);
-			
 
 		}
 
@@ -401,6 +467,9 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 						this.mScaleY = this.getScaleY();
 						this.setScaleX(1.1f * mScaleX);
 						this.setScaleY(1.1f * mScaleY);
+						
+						//Twee keer snel achter elkaar down (binnen 1000 ms) == double tap
+						checkDoubleTap();
 
 					} else if (!isZooming) {
 						dX2 = pSceneTouchEvent.getX() - this.getX();
@@ -465,9 +534,53 @@ public class Visualtasks extends SimpleBaseGameActivity implements IOnSceneTouch
 			
 			
 		}
+		
+		/**
+		 * Bad solution to check for double tap
+		 */
+		private void checkDoubleTap(){
+			// fake double tap
+            if(firstTap){
+                thisTime = SystemClock.uptimeMillis();
+                firstTap = false;
+            }else{
+                prevTime = thisTime;
+                thisTime = SystemClock.uptimeMillis();
+
+                //Check that thisTime is greater than prevTime
+                //just in case system clock reset to zero
+                if(thisTime > prevTime){
+
+                    //Check if times are within our max delay
+                    if((thisTime - prevTime) <= DOUBLE_CLICK_MAX_DELAY){
+
+                        contextMenu(this);
+
+                    }else{
+                        //Otherwise Reset firstTap
+                        firstTap = true;
+                    }
+                }else{
+                    firstTap = true;
+                }
+            }
+		}
+		
+		/**
+		 * Changes the name of a task in newName
+		 * @param newName
+		 */
+		public void editName(String newName) {
+			
+			this.mText = new Text(0, 0, this.mFont, newName,	new TextOptions(AutoWrap.WORDS, this.getWidth(), 4, HorizontalAlign.CENTER),vB);
+			
+			mText.setPosition(this.getWidth() / 2f - mText.getWidth() / 2f,	this.getHeight() / 2f - mText.getHeight() / 2f);
+			this.detachChildren();
+			this.attachChild(mText);
+		}
+		
 
 	}
-	
 	
 
 
