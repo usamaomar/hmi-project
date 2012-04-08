@@ -1,6 +1,7 @@
 package visualtasks.com;
 
 import org.andengine.entity.IEntity;
+import org.andengine.entity.scene.IOnAreaTouchListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.AutoWrap;
@@ -37,7 +38,8 @@ class TextSprite extends Sprite{
 	
 	private final Font mFont;
 	private Text mText;
-
+	private IOnAreaTouchListener mIOnAreaTouchListener;
+	
 	public TextSprite(String pText, float pX, float pY, Font pFont,ITextureRegion pTextureRegion, VertexBufferObjectManager vBOM) {
 		super(pX,pY,pTextureRegion, vBOM);
 		this.mFont = pFont;
@@ -47,6 +49,7 @@ class TextSprite extends Sprite{
 		this.attachChild(mText);
 		this.setScale(START_SCALE);
 		this.updateText();
+		
 	}
 	
 	
@@ -57,6 +60,10 @@ class TextSprite extends Sprite{
 	}
 	
 
+	public void setIOnAreaTouchListener(IOnAreaTouchListener pIOnAreaTouchListener) {
+		this.mIOnAreaTouchListener = pIOnAreaTouchListener;
+	}
+	
 	private void setPositionInCenter() {
 		this.setPosition(this.getX() - this.getWidth() / 2f, this.getY() - this.getHeight()/ 2f);
 		
@@ -84,7 +91,18 @@ class TextSprite extends Sprite{
 		mText.setPosition(this.getWidth() / 2f - mText.getWidth() / 2f,	this.getHeight() / 2f - mText.getHeight() / 2f);
 	}
 	
+	public void setText(String pText){
+		this.mText.setText(pText);
+	}
 
+	public String getText(){
+		return this.mText.getText().toString();
+	}
 	
-	
+	@Override
+	public boolean onAreaTouched(TouchEvent pSceneTouchEvent,float pTouchAreaLocalX, float pTouchAreaLocalY) {
+		// TODO Auto-generated method stub
+		return mIOnAreaTouchListener.onAreaTouched(pSceneTouchEvent, this, pTouchAreaLocalX, pTouchAreaLocalY);
+		
+	}
 }
