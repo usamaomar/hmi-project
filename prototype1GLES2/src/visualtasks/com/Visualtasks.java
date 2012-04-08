@@ -1,7 +1,6 @@
 package visualtasks.com;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.andengine.engine.camera.ZoomCamera;
@@ -15,8 +14,6 @@ import org.andengine.entity.scene.background.ParallaxBackground.ParallaxEntity;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.input.touch.TouchEvent;
-import org.andengine.input.touch.detector.ClickDetector;
-import org.andengine.input.touch.detector.ClickDetector.IClickDetectorListener;
 import org.andengine.input.touch.detector.HoldDetector;
 import org.andengine.input.touch.detector.HoldDetector.IHoldDetectorListener;
 import org.andengine.input.touch.detector.PinchZoomDetector;
@@ -31,13 +28,11 @@ import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.andengine.opengl.texture.region.ITextureRegion;
-import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.ui.dialog.StringInputDialogBuilder;
 import org.andengine.util.call.Callback;
 
 import visualtasks.com.TasksController.UnknownTaskExeption;
-
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -346,7 +341,7 @@ public class Visualtasks extends SimpleBaseGameActivity implements ITasksListene
 	}
 	
 	protected void onSceneHold(float pHoldX, float pHoldY){
-		
+		showNewTaskPopUp();
 	}
 	
 	private void showNewTaskPopUp(){

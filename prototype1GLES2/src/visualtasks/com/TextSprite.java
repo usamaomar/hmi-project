@@ -1,27 +1,15 @@
 package visualtasks.com;
 
-import org.andengine.entity.IEntity;
 import org.andengine.entity.scene.IOnAreaTouchListener;
-import org.andengine.entity.scene.Scene;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.AutoWrap;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.text.TextOptions;
 import org.andengine.input.touch.TouchEvent;
-import org.andengine.input.touch.detector.ClickDetector;
-import org.andengine.input.touch.detector.ClickDetector.IClickDetectorListener;
-import org.andengine.input.touch.detector.HoldDetector;
-import org.andengine.input.touch.detector.HoldDetector.IHoldDetectorListener;
-import org.andengine.input.touch.detector.PinchZoomDetector;
-import org.andengine.input.touch.detector.PinchZoomDetector.IPinchZoomDetectorListener;
-import org.andengine.input.touch.detector.ScrollDetector;
-import org.andengine.input.touch.detector.ScrollDetector.IScrollDetectorListener;
 import org.andengine.opengl.font.Font;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.util.HorizontalAlign;
-
-import android.os.SystemClock;
 
 /**
  * 
@@ -71,22 +59,6 @@ class TextSprite extends Sprite{
 
 
 
-	private void bringToTop() {
-		final IEntity parent = this.getParent();
-			
-		if (parent instanceof Scene){
-			final Scene parentScene = (Scene) parent;
-			parentScene.detachChild(this);
-						
-			parentScene.unregisterTouchArea(this);
-			parentScene.attachChild(this);
-
-		}
-	}
-
-
-
-	
 	private void updateText(){
 		mText.setPosition(this.getWidth() / 2f - mText.getWidth() / 2f,	this.getHeight() / 2f - mText.getHeight() / 2f);
 	}
