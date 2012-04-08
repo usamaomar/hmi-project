@@ -16,19 +16,28 @@ public final class R {
         public static final int ic_launcher=0x7f020002;
     }
     public static final class id {
-        public static final int text=0x7f060000;
+        public static final int complete=0x7f060002;
+        public static final int delete=0x7f060001;
+        public static final int edit_name=0x7f060000;
+        public static final int text=0x7f060003;
     }
     public static final class layout {
-        public static final int main=0x7f030000;
-        public static final int test=0x7f030001;
+        public static final int contextmenu=0x7f030000;
+        public static final int main=0x7f030001;
+        public static final int test=0x7f030002;
     }
     public static final class menu {
         public static final int menu=0x7f050000;
     }
     public static final class string {
         public static final int app_name=0x7f040001;
+        public static final int complete=0x7f040008;
+        public static final int delete=0x7f040007;
+        public static final int dialog_edit_new_message=0x7f040005;
+        public static final int dialog_edit_task=0x7f040004;
         public static final int dialog_task_new_message=0x7f040003;
         public static final int dialog_task_new_title=0x7f040002;
+        public static final int edit=0x7f040006;
         public static final int hello=0x7f040000;
     }
 }
