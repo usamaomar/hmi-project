@@ -8,17 +8,23 @@ public class Task implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	public static final int STATUS_ACTIVE = 0;
+	public static final int STATUS_COMPLETED = STATUS_ACTIVE + 1;
+	public static final int STATUS_DELETED = STATUS_COMPLETED + 1;
 	
+	private int mID;
 	private String mDescription;
 	
-	private float[] mCoord ;
+	private float mX, mY;
 
+	private int mStatus;
 	
-	
-	public Task(String pDescription, float[] pCoord) {
+	public Task(int pID, String pDescription, float pX, float pY) {
 		super();
 		this.mDescription = pDescription;
-		this.mCoord = pCoord;
+		this.mX = pX; 
+		this.mY = pY;
+		this.mID = pID;
 	}
 
 	public String getDescription() {
@@ -29,20 +35,34 @@ public class Task implements Serializable {
 		this.mDescription = pDescription;
 	}
 
-	public float[] getCoord() {
-		return mCoord;
+	public int getStatus() {
+		return mStatus;
 	}
-
-	public void setCoord(float[] pCoord) {
-		this.mCoord = pCoord;
+	
+	public void setStatus(int pStatus) {
+		this.mStatus = pStatus;
 	}
+	
 
-	public float getXCoord(){
-		return mCoord[0];
+	public float getX(){
+		return mX;
 		
 	}
-	public float getYCoord(){
-		return mCoord[1];
+	
+	public void setX(float pX){
+		mX = pX;
+	}
+	public float getY(){
+		return mY;
+		
+	}
+	
+	public void setY(float pY){
+		mY = pY;
+	}
+	
+	public int getID() {
+		return mID;
 	}
 	
 	
