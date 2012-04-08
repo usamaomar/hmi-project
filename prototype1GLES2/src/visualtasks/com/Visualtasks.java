@@ -36,7 +36,6 @@ import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.ui.dialog.StringInputDialogBuilder;
 import org.andengine.util.call.Callback;
 
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -47,6 +46,9 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
 
 public class Visualtasks extends SimpleBaseGameActivity {
 	// ===========================================================
@@ -274,58 +276,63 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	
 	
 	/**
-	 * Option menu after double tapping on task
+	 * Context menu after holding on task
 	 * @param task The task to be edited
 	 */
-	private void contextMenu(final TextSprite task) {
-		final Context context = this;
-		this.runOnUiThread(new Runnable(){
-			
+	private void contextMenu(final Task task) {
+		final Context ct = this;
+		runOnUiThread(new Runnable(){
 			@Override
 			public void run() {
-				AlertDialog.Builder menu = new AlertDialog.Builder(context);
-				//builder.setIcon(R.drawable.dialog_question);
-				menu.setTitle(R.string.dialog_edit_task);
-				menu.setInverseBackgroundForced(true);
-				
-				menu.setPositiveButton("Name", new DialogInterface.OnClickListener() {
-
-						    public void onClick(DialogInterface dialog, int which) {
-						    	//nieuwe naam moet weer met dialog maar dit is voor test
-						    	// dus hier weer nieuw dialog met edit text field en ok knop.
-//						    	task.editName("new name");
-						    	}
-						   });
-
-				menu.setNegativeButton("Complete", new DialogInterface.OnClickListener() {
-						  //Eerste heette dit Finish, weet niet welke benaming beter is.
-						  @Override
-						  public void onClick(DialogInterface dialog, int which) {
-								mTasksList.remove(task);
-								//show message: task.getName() has been finished!
-								mScene.detachChild(task);
-						  }
-						 });
-						 
-				menu.setNeutralButton("Priority", new DialogInterface.OnClickListener() {
-
-						  @Override
-						  public void onClick(DialogInterface dialog, int which) {
-							// Do nothing but close the dialog
-							// weet nog niet hoe we dit gaan doen (mogelijkheid via slider? als pinch niet goed lukt)
-						  }
-						 });
-				
-				AlertDialog cMenu = menu.create();
-				cMenu.show();
-			}});
 		
+				//set up dialog
+		        Dialog dialog = new Dialog(ct);
+		        dialog.setContentView(R.layout.contextmenu);
+		        dialog.setTitle(R.string.dialog_edit_task);
+		
+		        //set up buttons
+		        Button editTitle = (Button) dialog.findViewById(R.id.edit_name);
+		        editTitle.setOnClickListener(new OnClickListener() {
+		
+					@Override
+					public void onClick(View arg0) {
+						showEditTaskPopUp(task);
+						
+					}
+					
+		        });
+		        
+		        Button delete = (Button) dialog.findViewById(R.id.delete);
+		        delete.setOnClickListener(new OnClickListener() {
+		
+					@Override
+					public void onClick(View arg0) {
+						// afhandelen delete task
+						
+					}
+					
+		        });
+		        
+		        Button complete = (Button) dialog.findViewById(R.id.complete);
+		        complete.setOnClickListener(new OnClickListener() {
+		
+					@Override
+					public void onClick(View arg0) {
+						// afhandelen completen task
+						
+					}
+					
+		        });
+		        
+   
+		        dialog.show();
+			}});
 	}
 	
 	
 	
 	
-	
+
 	
 	
 	
@@ -495,7 +502,8 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		public void onHoldStarted(HoldDetector arg0, int arg1, float arg2,
 				float arg3) {
 			this.mHoldDetector.setEnabled(false);
-			showEditTaskPopUp(this.mTask);
+			//showEditTaskPopUp(this.mTask);
+			contextMenu(this.mTask);
 			this.mHoldDetector.setEnabled(true);
 			
 		}
