@@ -106,6 +106,7 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 			this.mContext.runOnUiThread(new Runnable(){
 				@Override
 				public void run() {
+					TaskSprite.this.mContext.removeDialog(Visualtasks.DIALOG_CONTEXT_ID);
 					TaskSprite.this.mContext.showDialog(Visualtasks.DIALOG_CONTEXT_ID, bundle);
 					
 				}});
