@@ -11,7 +11,7 @@ public class Task implements Serializable {
 	public static final int STATUS_ACTIVE = 0;
 	public static final int STATUS_COMPLETED = STATUS_ACTIVE + 1;
 	public static final int STATUS_DELETED = STATUS_COMPLETED + 1;
-	
+//	public static final int 
 	private int mID;
 	private String mDescription;
 	
