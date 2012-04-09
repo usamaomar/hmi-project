@@ -2,7 +2,7 @@ package visualtasks.com;
 
 import java.io.Serializable;
 
-public class Task implements Serializable {
+public class Task implements Comparable<Task>, Serializable {
 
 	/**
 	 * 
@@ -15,6 +15,7 @@ public class Task implements Serializable {
 	private int mID;
 	private String mDescription;
 	
+	private float mUrgency;
 	private float mX, mY;
 
 	private int mStatus;
@@ -43,6 +44,14 @@ public class Task implements Serializable {
 		this.mStatus = pStatus;
 	}
 	
+	
+	public float getUrgency() {
+		return mUrgency;
+	}
+	
+	public void setUrgency(float pUrgency) {
+		this.mUrgency = pUrgency;
+	}
 
 	public float getX(){
 		return mX;
@@ -72,6 +81,17 @@ public class Task implements Serializable {
 		void onTaskPositionUpdated(Task pTask, float pOldX, float pOldY, float pNewX, float pNewY);
 		void onTaskDescriptionUpdated(Task pTask, String pOldDescription, String pNewDescription);
 	}
+
+	
+
+	@Override
+	public int compareTo(Task another) {
+		// TODO Auto-generated method stub
+		
+		return (int) Math.signum(another.getUrgency() - this.getUrgency());
+	}
+	
+	
 	
 	
 

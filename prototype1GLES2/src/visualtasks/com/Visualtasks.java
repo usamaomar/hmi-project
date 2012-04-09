@@ -99,7 +99,8 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	@Override
 	public Engine onCreateEngine(EngineOptions pEngineOptions) {
 
-		if (mTaskList == null) this.mTaskList = new ArrayList<Task>();
+		if (mTaskList == null) this.mTaskList = new ArrayList<Task>(mTaskList);
+		
 		return super.onCreateEngine(pEngineOptions);
 	}
 
@@ -248,6 +249,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 								
 									task.setDescription(pCallbackValue);
 									Visualtasks.this.updateTaskSpriteForTask(task);
+									Visualtasks.this.removeDialog(DIALOG_EDIT_TASK_ID);
 								
 							}},   
 						new OnCancelListener() {
@@ -306,6 +308,9 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	}
 
 
+	private void sortTasks(){
+		
+	}
 	private void addTask(String description, float pX, float pY){
 		Task task = new Task(0,description, pX, pY);
 		this.mTaskList.add(task);
