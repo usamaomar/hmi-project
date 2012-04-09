@@ -25,7 +25,7 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 	private PinchZoomDetector mPinchZoomDetector;
 	private ScrollDetector mScrollDetector;
 
-	private boolean mPinchToScaleEnabled, mScrollToMoveEnabled; 
+	private boolean isTouched;
 	private Visualtasks mContext;
 	private Task mTask;
 	private float mStartScaleX, mStartScaleY;
@@ -47,10 +47,15 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 		
 	@Override
 	protected void onManagedUpdate(float pSecondsElapsed) {
-		
 		this.setPosition(mTask.getX(), mTask.getY());
 		this.setText(mTask.getDescription());
+			
+			if(!this.mPinchZoomDetector.isZooming()){
+				this.setScale(this.getScaleFromUrgency(mTask.getUrgency()));
+			}
+		
 		super.onManagedUpdate(pSecondsElapsed);
+		
 	}
 	
 	
@@ -68,11 +73,19 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 	
 	@Override
 	public void onPinchZoomFinished(PinchZoomDetector arg0, TouchEvent arg1,float pZoomFactor) {
-		
-//				mITextSpriteListener.onTextSpriteScaleChanged(this, mStartScaleX, mStartScaleY, pZoomFactor);
+		final float urgency = this.getUrgencyFromScale(this.getScaleX());
+		this.mTask.setUrgency(urgency);
+		mContext.sortTasks();
 		
 	}
 	
+	private float getUrgencyFromScale(Float scale){
+		return SCALE_MAX-(scale/SCALE_FACTOR);
+	}
+	
+	private float getScaleFromUrgency(Float urgency){
+		return (SCALE_MAX-urgency) * SCALE_FACTOR;
+	}
 	@Override
 	public void onPinchZoomStarted(PinchZoomDetector arg0, TouchEvent arg1) {
 		
@@ -150,7 +163,6 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 			case TouchEvent.ACTION_OUTSIDE:
 				break;
 			case TouchEvent.ACTION_DOWN:
-				
 			case TouchEvent.ACTION_MOVE:
 			default:
 				this.mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
@@ -171,7 +183,15 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 					}
 				}
 			}
-				
+			
+			switch(pSceneTouchEvent.getAction()){
+			case TouchEvent.ACTION_DOWN:
+				this.isTouched = true;
+				break;
+			case TouchEvent.ACTION_UP:
+			case TouchEvent.ACTION_CANCEL:
+				this.isTouched = false;
+			}
 				
 		
 		return true;
