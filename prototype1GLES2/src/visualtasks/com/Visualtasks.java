@@ -1,6 +1,7 @@
 package visualtasks.com;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 import org.andengine.engine.Engine;
@@ -79,7 +80,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	private ZoomCamera mZoomCamera;
 
 
-	private HashMap<Task, TextSprite> mTaskToSprite = new HashMap<Task, TextSprite>();
+	private HashMap<Task, TaskSprite> mTaskToSprite = new HashMap<Task, TaskSprite>();
 	
     private Bundle mSavedInstanceState;
     
@@ -99,7 +100,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	@Override
 	public Engine onCreateEngine(EngineOptions pEngineOptions) {
 
-		if (mTaskList == null) this.mTaskList = new ArrayList<Task>(mTaskList);
+		if (mTaskList == null) this.mTaskList = new ArrayList<Task>();
 		
 		return super.onCreateEngine(pEngineOptions);
 	}
@@ -249,6 +250,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 								
 									task.setDescription(pCallbackValue);
 									Visualtasks.this.updateTaskSpriteForTask(task);
+									Visualtasks.this.sortTasks();
 									Visualtasks.this.removeDialog(DIALOG_EDIT_TASK_ID);
 								
 							}},   
@@ -308,19 +310,32 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	}
 
 
-	private void sortTasks(){
-		
+	public void sortTasks(){
+		Collections.sort(mTaskList);
+		int i = 0;
+		for (Task task : mTaskList){
+			if(mTaskToSprite.containsKey(task)){
+				TaskSprite taskSprite = mTaskToSprite.get(task);
+				this.mScene.detachChild(taskSprite);
+				this.mScene.unregisterTouchArea(taskSprite);
+				this.mScene.attachChild(taskSprite);
+				this.mScene.registerTouchArea(taskSprite);
+			}
+			i++;
+		}
 	}
 	private void addTask(String description, float pX, float pY){
 		Task task = new Task(0,description, pX, pY);
 		this.mTaskList.add(task);
 		this.updateTaskSpriteForTask(task);
+		this.sortTasks();
 	}
 	
 	private void updateAllTaskSpritesForTasks(final ArrayList<Task> pTasks){
 		for (Task task : pTasks){
 			updateTaskSpriteForTask(task);
 		}
+		this.sortTasks();
 	}
 	private void updateTaskSpriteForTask(final Task pTask){
 		this.removeTaskSpriteForTask(pTask);
@@ -329,7 +344,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		mTaskToSprite.put(pTask, taskSprite);
 		Visualtasks.this.mScene.attachChild(taskSprite);
 		Visualtasks.this.mScene.registerTouchArea(taskSprite);
-				
+			
 	}
 	
 	private void deleteTask(Task pTask){
