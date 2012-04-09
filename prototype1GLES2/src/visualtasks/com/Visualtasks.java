@@ -1,8 +1,9 @@
 package visualtasks.com;
 
-import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.andengine.engine.Engine;
 import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.EngineOptions.ScreenOrientation;
@@ -32,9 +33,7 @@ import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.ui.dialog.StringInputDialogBuilder;
 import org.andengine.util.call.Callback;
 
-import visualtasks.com.TaskAdapter.UnknownTaskExeption;
 import android.app.Dialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.graphics.Color;
@@ -58,13 +57,16 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	
 	private static final int TRIGGER_HOLD_MIN_MILISECONDS = 300;
 	
-	private static final int DIALOG_NEW_TASK_ID = 0;
-	private static final int DIALOG_EDIT_TASK_ID = DIALOG_NEW_TASK_ID + 1;
-	private static final int DIALOG_CONTEXT_ID = DIALOG_EDIT_TASK_ID + 1;
+	public static final int DIALOG_NEW_TASK_ID = 0;
+	public static final int DIALOG_EDIT_TASK_ID = DIALOG_NEW_TASK_ID + 1;
+	public static final int DIALOG_CONTEXT_ID = DIALOG_EDIT_TASK_ID + 1;
+	public static final String KEY_TASK_LIST = "key_task_list"; 
+	public static final String KEY_TASK = "key_task";
+	public static final String KEY_TASK_X = "tX";
+	public static final String KEY_TASK_Y = "tY";
 	
-	private static final String KEY_TASK = "key_task";
-	private static final String KEY_TASK_X = "tX";
-	private static final String KEY_TASK_Y = "tY";
+	
+	private ArrayList<Task> mTaskList;
 	
 	private BitmapTextureAtlas mAutoParallaxBackgroundTexture;
 	private BitmapTextureAtlas mBitmapTextureAtlas;
@@ -75,11 +77,11 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	// private Camera mCamera;
 	private TouchController mTouchController;
 	private ZoomCamera mZoomCamera;
-	private TaskToSpriteController mTasksToSpriteController;
-	private TaskAdapter mTaskAdapter;
+
+
 	private HashMap<Task, TextSprite> mTaskToSprite = new HashMap<Task, TextSprite>();
 	
-    
+    private Bundle mSavedInstanceState;
     
 	// ===========================================================
 	// Getter & Setter
@@ -94,20 +96,27 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	
 	
 
+	@Override
+	public Engine onCreateEngine(EngineOptions pEngineOptions) {
 
+		if (mTaskList == null) this.mTaskList = new ArrayList<Task>();
+		return super.onCreateEngine(pEngineOptions);
+	}
 
-	
-	
-	
-
-	
 	@Override
 	protected void onCreate(Bundle pSavedInstanceState) {
+		this.mSavedInstanceState = pSavedInstanceState;
+		if (this.mSavedInstanceState != null && mSavedInstanceState.containsKey(KEY_TASK_LIST)){
+			this.mTaskList = (ArrayList<Task>) mSavedInstanceState.getSerializable(KEY_TASK_LIST);
+			
+		}
 		
-		this.mTasksToSpriteController = new TaskToSpriteController();
-		this.mTaskAdapter = new TaskAdapter(mTasksToSpriteController);
 		super.onCreate(pSavedInstanceState);
 	}
+	
+	
+	
+	
 	
 	@Override
 	public EngineOptions onCreateEngineOptions() {
@@ -177,13 +186,13 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		
 		
 		//this.mScene.registerUpdateHandler(mHoldDetector);
-
+		updateAllTaskSpritesForTasks(this.mTaskList);
 		return this.mScene;
 	}
 	
 		
 	
-	
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
@@ -196,19 +205,25 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		return true;
 	}
 
+	@Override
+	protected void onPause() {
+		// TODO Auto-generated method stub
+		super.onPause();
+	}
 	
 	@Override
 	protected Dialog onCreateDialog(int id, final Bundle bundle) {
 		switch(id){
 		case DIALOG_NEW_TASK_ID:
-			final float pX = bundle != null && bundle.containsKey(KEY_TASK_X) ? bundle.getFloat(KEY_TASK_X) : this.mScene.getSceneCenterCoordinates()[0];
-			final float pY = bundle != null &&bundle.containsKey(KEY_TASK_Y) ? bundle.getFloat(KEY_TASK_Y) : this.mScene.getSceneCenterCoordinates()[1];
+			final float pX = bundle != null && bundle.containsKey(KEY_TASK_X) ? bundle.getFloat(KEY_TASK_X) : (this.mZoomCamera.getXMax()-this.mZoomCamera.getXMin())/2f;
+			final float pY = bundle != null &&bundle.containsKey(KEY_TASK_Y) ? bundle.getFloat(KEY_TASK_Y) : (this.mZoomCamera.getYMax()-this.mZoomCamera.getYMin())/2f;
+			
 			return new StringInputDialogBuilder(this,R.string.dialog_task_new_title,0, R.string.dialog_task_new_message, android.R.drawable.ic_dialog_info, "",
 				    new Callback<String>() {
 						@Override
 						public void onCallback(String pCallbackValue) {
-							mTaskAdapter.addTask(pCallbackValue, pX, pY);
-							removeDialog(DIALOG_NEW_TASK_ID);
+							Visualtasks.this.addTask(pCallbackValue, pX, pY);
+							Visualtasks.this.removeDialog(DIALOG_NEW_TASK_ID);
 						}},   
 					new OnCancelListener() {
 						@Override
@@ -226,12 +241,10 @@ public class Visualtasks extends SimpleBaseGameActivity {
 						new Callback<String>() { 							
 							@Override
 							public void onCallback(String pCallbackValue) {
-								try {
-									mTaskAdapter.updateTaskDescription(task.getID(), pCallbackValue);
-								} catch (UnknownTaskExeption e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
+								
+									task.setDescription(pCallbackValue);
+									Visualtasks.this.updateTaskSpriteForTask(task);
+								
 							}},   
 						new OnCancelListener() {
 							@Override
@@ -252,15 +265,17 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	        editTitle.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View arg0) {
-					dismissDialog(DIALOG_CONTEXT_ID);
-					showDialog(DIALOG_EDIT_TASK_ID, bundle);
+					Visualtasks.this.dismissDialog(DIALOG_CONTEXT_ID);
+					Visualtasks.this.showDialog(DIALOG_EDIT_TASK_ID, bundle);
 				}});
 	        
 	        Button delete = (Button) dialog.findViewById(R.id.delete);
 	        delete.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View arg0) {
-					// afhandelen delete task
+						Visualtasks.this.dismissDialog(DIALOG_CONTEXT_ID);
+						Visualtasks.this.deleteTask(task1);
+					
 					
 				}});
 	        
@@ -277,17 +292,49 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	}
 
 
-
-	@Override
-	protected void onRestoreInstanceState(Bundle savedInstanceState) {
-		Serializable serializable = savedInstanceState.getSerializable("tasks");
-		
-		super.onRestoreInstanceState(savedInstanceState);
+	private void addTask(String description, float pX, float pY){
+		Task task = new Task(0,description, pX, pY);
+		this.mTaskList.add(task);
+		this.updateTaskSpriteForTask(task);
 	}
+	
+	private void updateAllTaskSpritesForTasks(final ArrayList<Task> pTasks){
+		for (Task task : pTasks){
+			updateTaskSpriteForTask(task);
+		}
+	}
+	private void updateTaskSpriteForTask(final Task pTask){
+		this.removeTaskSpriteForTask(pTask);
+		final TaskSprite taskSprite = new TaskSprite(this, pTask, mFont, mTaskTextureRegion, getVertexBufferObjectManager());
+		
+		mTaskToSprite.put(pTask, taskSprite);
+		Visualtasks.this.mScene.attachChild(taskSprite);
+		Visualtasks.this.mScene.registerTouchArea(taskSprite);
+				
+	}
+	
+	private void deleteTask(Task pTask){
+		this.mTaskList.remove(pTask);
+		this.removeTaskSpriteForTask(pTask);
+	}
+	
+	private void removeTaskSpriteForTask(Task pTask){
+		if(mTaskToSprite.containsKey(pTask)){
+			final TextSprite textSprite = Visualtasks.this.mTaskToSprite.get(pTask);
+			Visualtasks.this.mTaskToSprite.remove(pTask);
+			Visualtasks.this.mScene.detachChild(textSprite);
+			Visualtasks.this.mScene.unregisterTouchArea(textSprite);
+			textSprite.dispose();
+			this.mTaskToSprite.remove(pTask);
+//			TODO Do something with sprite
+		}
+		
+	}
+
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
-		
+		outState.putSerializable(KEY_TASK_LIST, mTaskList);
 		super.onSaveInstanceState(outState);
 		
 	}
@@ -299,111 +346,12 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		runOnUiThread(new Runnable(){
 			@Override
 			public void run() {
-				showDialog(DIALOG_EDIT_TASK_ID, bundle);
+				Visualtasks.this.showDialog(DIALOG_NEW_TASK_ID, bundle);
 			}});
 	}
 	
 	
 
-	class TaskToSpriteController implements ITasksListener, ITextSpriteListener{
-		@Override
-		public void onTaskAdded(TaskAdapter pTaskAdapter, Task pTask) {
-			addTextSpriteForTask(pTask);
-		}
-
-		// Methods for menu
-
-		@Override
-		public void onTaskDeleted(TaskAdapter pTaskAdapter, Task pTask) {
-			if(mTaskToSprite.containsKey(pTask)){
-				
-				this.removeTextSpriteForTask(pTask);
-//				TODO Do something with sprite
-			}
-			
-			
-		}
-		@Override
-		public void onTaskDescriptionUpdated(TaskAdapter pTaskAdapter,Task pTask, String pOldDescription, String pNewDescription) {
-			if(mTaskToSprite.containsKey(pTask)){
-				this.removeTextSpriteForTask(pTask);
-				this.addTextSpriteForTask(pTask);
-			}
-			
-		}
-
-		@Override
-		public void onTaskPositionUpdated(TaskAdapter pTaskAdapter,Task pTask, float pOldX, float pOldY, float pNewX, float pNewY) {
-			if(mTaskToSprite.containsKey(pTask)){
-				final TextSprite textSprite = mTaskToSprite.get(pTask);
-				textSprite.setPosition(pNewX, pNewY);
-			}
-			
-		}
-
-		
-
-		
-		private void addTextSpriteForTask(Task pTask){
-			final TextSprite textSprite = new TextSprite(pTask.getDescription(), pTask.getX(), pTask.getY(), mFont, mTaskTextureRegion, getVertexBufferObjectManager());
-			textSprite.setIOnAreaTouchListener(new TextSpriteController(this, true, true));
-			textSprite.setUserData(pTask);
-			
-			mTaskToSprite.put(pTask, textSprite);
-			mScene.attachChild(textSprite);
-			mScene.registerTouchArea(textSprite);
-		}
-		
-		private void removeTextSpriteForTask(Task pTask){
-			if(mTaskToSprite.containsKey(pTask)){
-				final TextSprite textSprite = mTaskToSprite.get(pTask);
-				mTaskToSprite.remove(pTask);
-				mScene.detachChild(textSprite);
-				mScene.unregisterTouchArea(textSprite);
-				textSprite.dispose();
-//				TODO Do something with sprite
-			}
-			
-		}
-		
-		
-		@Override
-		public void onTextSpritePositionChanged(TextSprite pTextSprite, float pDistanceX, float pDistanceY) {
-			if (pTextSprite.getUserData() instanceof Task){
-				Task task = (Task) pTextSprite.getUserData();
-				try {
-					mTaskAdapter.updateTaskPosition(task.getID(), pTextSprite.getX(), pTextSprite.getY());
-				} catch (UnknownTaskExeption e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-			
-		}
-
-		
-		@Override
-		public void onTextSpriteScaleChanged(TextSprite pTextSprite,	float pStartScaleX, float pStartScaleY, float pZoomFactor) {
-			// TODO Auto-generated method stub
-			
-		}
-		
-		@Override
-		public void onTextSpriteHold(TextSprite pTextSprite) {
-			if (pTextSprite.getUserData() instanceof Task){
-				Task task = (Task) pTextSprite.getUserData();
-				final Bundle bundle = new Bundle();
-				bundle.putSerializable(KEY_TASK, task);
-				runOnUiThread(new Runnable(){
-					@Override
-					public void run() {
-						showDialog(DIALOG_CONTEXT_ID, bundle);
-						
-					}});
-			}
-			
-		}
-	}
 	
 	class TouchController implements IOnSceneTouchListener,IScrollDetectorListener, IPinchZoomDetectorListener, IHoldDetectorListener{
 
@@ -442,7 +390,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		@Override
 		public void onHoldStarted(HoldDetector pHoldDetector, int pPointerID, float pHoldX, float pHoldY) {
 			pHoldDetector.setEnabled(false);
-			onSceneHold(pHoldX, pHoldY);
+			Visualtasks.this.onSceneHold(pHoldX, pHoldY);
 			pHoldDetector.setEnabled(true);
 		}
 		
@@ -495,8 +443,8 @@ public class Visualtasks extends SimpleBaseGameActivity {
 				pScrollDetector.reset();
 			}
 			else {
-				final float zoomFactor = mZoomCamera.getZoomFactor();
-				mZoomCamera.offsetCenter(-pDistanceX , -pDistanceY );
+				final float zoomFactor = Visualtasks.this.mZoomCamera.getZoomFactor();
+				Visualtasks.this.mZoomCamera.offsetCenter(-pDistanceX , -pDistanceY );
 			}
 		}
 
@@ -507,8 +455,8 @@ public class Visualtasks extends SimpleBaseGameActivity {
 				pScrollDetector.reset();
 			}
 			else {
-				final float zoomFactor = mZoomCamera.getZoomFactor();
-				mZoomCamera.offsetCenter(-pDistanceX, -pDistanceY );
+				final float zoomFactor = Visualtasks.this.mZoomCamera.getZoomFactor();
+				Visualtasks.this.mZoomCamera.offsetCenter(-pDistanceX, -pDistanceY );
 			}
 			
 		}
