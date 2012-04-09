@@ -19,7 +19,7 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 	
 	private static final int TRIGGER_HOLD_MIN_MILISECONDS = 300;
 	private static final float SCALE_MIN = 1f;
-	private static final float SCALE_MAX = 3f;
+	private static final float SCALE_MAX = 2f;
 	private final static float SCALE_FACTOR = 0.5f;
 	private HoldDetector mHoldDetector; 
 	private PinchZoomDetector mPinchZoomDetector;
