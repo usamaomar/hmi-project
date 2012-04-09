@@ -2,8 +2,8 @@ package visualtasks.com;
 
 public interface ITasksListener {
 
-	void afterTaskAdded(TasksController pTaskController, Task pTask);
-	void afterTaskDeleted(TasksController pTaskController, Task pTask );
-	void afterTaskPositionUpdated(TasksController pTaskController, Task pTask, float pOldX, float pOldY, float pNewX, float pNewY);
-	void afterTaskDescriptionUpdated(TasksController pTaskController, Task pTask, String pOldDescription, String pNewDescription);
+	void onTaskAdded(TaskAdapter pTaskController, Task pTask);
+	void onTaskDeleted(TaskAdapter pTaskController, Task pTask );
+	void onTaskPositionUpdated(TaskAdapter pTaskController, Task pTask, float pOldX, float pOldY, float pNewX, float pNewY);
+	void onTaskDescriptionUpdated(TaskAdapter pTaskController, Task pTask, String pOldDescription, String pNewDescription);
 }

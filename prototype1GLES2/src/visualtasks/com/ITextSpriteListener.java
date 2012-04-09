@@ -3,9 +3,9 @@ package visualtasks.com;
 public interface ITextSpriteListener {
 
 
-	void afterTextSpriteScaleChanged(TextSprite pTextSprite, float mStartScaleX,float mStartScaleY, float pZoomFactor);
+	void onTextSpriteScaleChanged(TextSprite pTextSprite, float mStartScaleX,float mStartScaleY, float pZoomFactor);
 
-	void afterTextSpritePositionChanged(TextSprite pTextSprite, float pDistanceX,float pDistanceY);
+	void onTextSpritePositionChanged(TextSprite pTextSprite, float pDistanceX,float pDistanceY);
 
 	void onTextSpriteHold(TextSprite mTextSprite);
 	
