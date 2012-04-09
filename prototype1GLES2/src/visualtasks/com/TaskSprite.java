@@ -1,27 +1,26 @@
 package visualtasks.com;
 
-import org.andengine.entity.scene.IOnAreaTouchListener;
-import org.andengine.entity.scene.ITouchArea;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.input.touch.detector.ClickDetector;
-import org.andengine.input.touch.detector.HoldDetector;
-import org.andengine.input.touch.detector.PinchZoomDetector;
-import org.andengine.input.touch.detector.ScrollDetector;
 import org.andengine.input.touch.detector.ClickDetector.IClickDetectorListener;
+import org.andengine.input.touch.detector.HoldDetector;
 import org.andengine.input.touch.detector.HoldDetector.IHoldDetectorListener;
+import org.andengine.input.touch.detector.PinchZoomDetector;
 import org.andengine.input.touch.detector.PinchZoomDetector.IPinchZoomDetectorListener;
+import org.andengine.input.touch.detector.ScrollDetector;
 import org.andengine.input.touch.detector.ScrollDetector.IScrollDetectorListener;
 import org.andengine.opengl.font.Font;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
-import org.andengine.ui.activity.BaseGameActivity;
 
 import android.os.Bundle;
 
 public class TaskSprite extends TextSprite implements IClickDetectorListener,IPinchZoomDetectorListener, IHoldDetectorListener, IScrollDetectorListener{
 	
 	private static final int TRIGGER_HOLD_MIN_MILISECONDS = 300;
-	
+	private static final float SCALE_MIN = 0.5f;
+	private static final float SCALE_MAX = 1.5f;
+	private final static float START_SCALE = 0.5f;
 	private HoldDetector mHoldDetector; 
 	private PinchZoomDetector mPinchZoomDetector;
 	private ScrollDetector mScrollDetector;
@@ -39,6 +38,7 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 	}
 	
 	private void init(){
+		this.setScale(START_SCALE);
 		this.mHoldDetector = new HoldDetector(this);
 		this.mPinchZoomDetector = new PinchZoomDetector(this);
 		this.mScrollDetector = new ScrollDetector(this);
@@ -56,7 +56,9 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 	
 	@Override
 	public void onPinchZoom(PinchZoomDetector arg0, TouchEvent arg1, float pZoomFactor) {
-		this.setScale(pZoomFactor * mStartScaleX, pZoomFactor * mStartScaleY);
+		float scaleX = Math.max(Math.min(pZoomFactor * mStartScaleX, SCALE_MAX),SCALE_MIN);
+		float scaleY = Math.max(Math.min(pZoomFactor * mStartScaleY, SCALE_MAX),SCALE_MIN);
+		this.setScale(scaleX,  scaleY);
 				
 	
 	}

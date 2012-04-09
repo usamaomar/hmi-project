@@ -22,7 +22,7 @@ import org.andengine.util.HorizontalAlign;
 
 class TextSprite extends Sprite{
 	
-	private final static float START_SCALE = 0.5f;
+	
 	
 	private final Font mFont;
 	private Text mText;
@@ -52,7 +52,7 @@ class TextSprite extends Sprite{
 	
 	private void init(){
 		mText.setPosition(this.getWidth() / 2f - mText.getWidth() / 2f,	this.getHeight() / 2f - mText.getHeight() / 2f);
-		this.setScale(START_SCALE);
+		
 		
 	}
 	
