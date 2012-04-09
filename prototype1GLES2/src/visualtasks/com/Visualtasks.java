@@ -32,7 +32,7 @@ import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.ui.dialog.StringInputDialogBuilder;
 import org.andengine.util.call.Callback;
 
-import visualtasks.com.TasksController.UnknownTaskExeption;
+import visualtasks.com.TaskAdapter.UnknownTaskExeption;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -47,7 +47,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 
-public class Visualtasks extends SimpleBaseGameActivity implements ITasksListener, ITextSpriteListener{
+public class Visualtasks extends SimpleBaseGameActivity {
 	// ===========================================================
 	// Constants
 	// ===========================================================
@@ -58,6 +58,14 @@ public class Visualtasks extends SimpleBaseGameActivity implements ITasksListene
 	
 	private static final int TRIGGER_HOLD_MIN_MILISECONDS = 300;
 	
+	private static final int DIALOG_NEW_TASK_ID = 0;
+	private static final int DIALOG_EDIT_TASK_ID = DIALOG_NEW_TASK_ID + 1;
+	private static final int DIALOG_CONTEXT_ID = DIALOG_EDIT_TASK_ID + 1;
+	
+	private static final String KEY_TASK = "key_task";
+	private static final String KEY_TASK_X = "tX";
+	private static final String KEY_TASK_Y = "tY";
+	
 	private BitmapTextureAtlas mAutoParallaxBackgroundTexture;
 	private BitmapTextureAtlas mBitmapTextureAtlas;
 	private Font mFont;
@@ -67,7 +75,8 @@ public class Visualtasks extends SimpleBaseGameActivity implements ITasksListene
 	// private Camera mCamera;
 	private TouchController mTouchController;
 	private ZoomCamera mZoomCamera;
-	private TasksController mTasksController;
+	private TaskToSpriteController mTasksToSpriteController;
+	private TaskAdapter mTaskAdapter;
 	private HashMap<Task, TextSprite> mTaskToSprite = new HashMap<Task, TextSprite>();
 	
     
@@ -87,146 +96,16 @@ public class Visualtasks extends SimpleBaseGameActivity implements ITasksListene
 
 
 
-	@Override
-	public void afterTaskAdded(TasksController pTaskController, Task pTask) {
-		addTextSpriteForTask(pTask);
-	}
-
-	// Methods for menu
-
-	@Override
-	public void afterTaskDeleted(TasksController pTaskController, Task pTask) {
-		if(mTaskToSprite.containsKey(pTask)){
-			
-			this.removeTextSpriteForTask(pTask);
-//			TODO Do something with sprite
-		}
-		
-		
-	}
-	@Override
-	public void afterTaskDescriptionUpdated(TasksController pTaskController,Task pTask, String pOldDescription, String pNewDescription) {
-		if(mTaskToSprite.containsKey(pTask)){
-			this.removeTextSpriteForTask(pTask);
-			this.addTextSpriteForTask(pTask);
-		}
-		
-	}
-
-	@Override
-	public void afterTaskPositionUpdated(TasksController pTaskController,Task pTask, float pOldX, float pOldY, float pNewX, float pNewY) {
-		if(mTaskToSprite.containsKey(pTask)){
-			final TextSprite textSprite = mTaskToSprite.get(pTask);
-			textSprite.setPosition(pNewX, pNewY);
-		}
-		
-	}
-
-	
-
-	
-	private void addTextSpriteForTask(Task pTask){
-		final TextSprite textSprite = new TextSprite(pTask.getDescription(), pTask.getX(), pTask.getY(), mFont, mTaskTextureRegion, this.getVertexBufferObjectManager());
-		textSprite.setIOnAreaTouchListener(new TextSpriteController(this, true, true));
-		textSprite.setUserData(pTask);
-		
-		mTaskToSprite.put(pTask, textSprite);
-		this.mScene.attachChild(textSprite);
-		this.mScene.registerTouchArea(textSprite);
-	}
-	
-	private void removeTextSpriteForTask(Task pTask){
-		if(mTaskToSprite.containsKey(pTask)){
-			final TextSprite textSprite = mTaskToSprite.get(pTask);
-			mTaskToSprite.remove(pTask);
-			this.mScene.detachChild(textSprite);
-			this.mScene.unregisterTouchArea(textSprite);
-			textSprite.dispose();
-//			TODO Do something with sprite
-		}
-		
-	}
 	
 	
-	@Override
-	public void afterTextSpritePositionChanged(TextSprite pTextSprite, float pDistanceX, float pDistanceY) {
-		if (pTextSprite.getUserData() instanceof Task){
-			Task task = (Task) pTextSprite.getUserData();
-			try {
-				this.mTasksController.updateTaskPosition(task.getID(), pTextSprite.getX(), pTextSprite.getY());
-			} catch (UnknownTaskExeption e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		
-	}
-
 	
-	@Override
-	public void afterTextSpriteScaleChanged(TextSprite mTextSprite,	float mStartScaleX, float mStartScaleY, float pZoomFactor) {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	/**
-	 * Context menu after holding on task
-	 * @param task The task to be edited
-	 */
-	private void contextMenu(final Task task) {
-		final Context ct = this;
-		runOnUiThread(new Runnable(){
-			@Override
-			public void run() {
-		
-				//set up dialog
-		        Dialog dialog = new Dialog(ct);
-		        dialog.setContentView(R.layout.contextmenu);
-		        dialog.setTitle(R.string.dialog_edit_task);
-		
-		        //set up buttons
-		        Button editTitle = (Button) dialog.findViewById(R.id.edit_name);
-		        editTitle.setOnClickListener(new OnClickListener() {
-		
-					@Override
-					public void onClick(View arg0) {
-//						showEditTaskPopUp(task);
-						
-					}
-					
-		        });
-		        
-		        Button delete = (Button) dialog.findViewById(R.id.delete);
-		        delete.setOnClickListener(new OnClickListener() {
-		
-					@Override
-					public void onClick(View arg0) {
-						// afhandelen delete task
-						
-					}
-					
-		        });
-		        
-		        Button complete = (Button) dialog.findViewById(R.id.complete);
-		        complete.setOnClickListener(new OnClickListener() {
-		
-					@Override
-					public void onClick(View arg0) {
-						// afhandelen completen task
-						
-					}
-					
-		        });
-		        
-   
-		        dialog.show();
-			}});
-	}
 
 	
 	@Override
 	protected void onCreate(Bundle pSavedInstanceState) {
-		this.mTasksController = new TasksController(this);
+		
+		this.mTasksToSpriteController = new TaskToSpriteController();
+		this.mTaskAdapter = new TaskAdapter(mTasksToSpriteController);
 		super.onCreate(pSavedInstanceState);
 	}
 	
@@ -310,13 +189,92 @@ public class Visualtasks extends SimpleBaseGameActivity implements ITasksListene
 		switch (item.getItemId()) {
 		case R.id.text:
 			
-			showNewTaskPopUp();
+			showDialog(DIALOG_NEW_TASK_ID);
 			// spawnTask();
 			break;
 		}
 		return true;
 	}
 
+	
+	@Override
+	protected Dialog onCreateDialog(int id, final Bundle bundle) {
+		switch(id){
+		case DIALOG_NEW_TASK_ID:
+			final float pX = bundle != null && bundle.containsKey(KEY_TASK_X) ? bundle.getFloat(KEY_TASK_X) : this.mScene.getSceneCenterCoordinates()[0];
+			final float pY = bundle != null &&bundle.containsKey(KEY_TASK_Y) ? bundle.getFloat(KEY_TASK_Y) : this.mScene.getSceneCenterCoordinates()[1];
+			return new StringInputDialogBuilder(this,R.string.dialog_task_new_title,0, R.string.dialog_task_new_message, android.R.drawable.ic_dialog_info, "",
+				    new Callback<String>() {
+						@Override
+						public void onCallback(String pCallbackValue) {
+							mTaskAdapter.addTask(pCallbackValue, pX, pY);
+							removeDialog(DIALOG_NEW_TASK_ID);
+						}},   
+					new OnCancelListener() {
+						@Override
+						public void onCancel(DialogInterface arg0) {
+							// nothing
+							
+						}})
+			.create();
+			
+		case DIALOG_EDIT_TASK_ID:
+			final Task task = bundle != null && bundle.containsKey(KEY_TASK) ? (Task)bundle.getSerializable(KEY_TASK) : null;
+			if (task != null){
+				return new StringInputDialogBuilder(this,R.string.dialog_task_new_title,0, R.string.dialog_task_new_message, android.R.drawable.ic_dialog_info,
+						task.getDescription(), 
+						new Callback<String>() { 							
+							@Override
+							public void onCallback(String pCallbackValue) {
+								try {
+									mTaskAdapter.updateTaskDescription(task.getID(), pCallbackValue);
+								} catch (UnknownTaskExeption e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							}},   
+						new OnCancelListener() {
+							@Override
+							public void onCancel(DialogInterface arg0) {
+								// nothing
+							}})
+				.create();
+			}
+		case DIALOG_CONTEXT_ID:
+			final Task task1 = bundle != null && bundle.containsKey(KEY_TASK) ? (Task)bundle.getSerializable(KEY_TASK) : null;
+			//set up dialog
+	        Dialog dialog = new Dialog(this);
+	        dialog.setContentView(R.layout.contextmenu);
+	        dialog.setTitle(R.string.dialog_edit_task);
+	
+	        //set up buttons
+	        Button editTitle = (Button) dialog.findViewById(R.id.edit_name);
+	        editTitle.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View arg0) {
+					dismissDialog(DIALOG_CONTEXT_ID);
+					showDialog(DIALOG_EDIT_TASK_ID, bundle);
+				}});
+	        
+	        Button delete = (Button) dialog.findViewById(R.id.delete);
+	        delete.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View arg0) {
+					// afhandelen delete task
+					
+				}});
+	        
+	        Button complete = (Button) dialog.findViewById(R.id.complete);
+	        complete.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View arg0) {
+					// afhandelen completen task
+					
+				}});
+	        return dialog;
+		}
+		return super.onCreateDialog(id, bundle);
+	}
 
 
 
@@ -334,51 +292,118 @@ public class Visualtasks extends SimpleBaseGameActivity implements ITasksListene
 		
 	}
 
-	@Override
-	public void onTextSpriteHold(TextSprite mTextSprite) {
-		// TODO Auto-generated method stub
-		
-	}
-	
 	protected void onSceneHold(float pHoldX, float pHoldY){
-		showNewTaskPopUp();
-	}
-	
-	private void showNewTaskPopUp(){
-		this.showNewTaskPopUp(this.mZoomCamera.getCenterX(), this.mZoomCamera.getCenterY());
-	}
-
-	private void showNewTaskPopUp(final float pX, final float pY) {
-		final Context ct = this;
+		final Bundle bundle = new Bundle();
+		bundle.putFloat(KEY_TASK_X, pHoldX);
+		bundle.putFloat(KEY_TASK_Y, pHoldY);
 		runOnUiThread(new Runnable(){
 			@Override
 			public void run() {
-				
-				Dialog dialog = new StringInputDialogBuilder(ct,R.string.dialog_task_new_title,0,
-					    R.string.dialog_task_new_message, android.R.drawable.ic_dialog_info,
-					    "",
-					    new Callback<String>() {
-												
-							@Override
-							public void onCallback(String pCallbackValue) {
-								mTasksController.addTask(pCallbackValue, pX, pY);
-								
-							}
-					
-					},   new OnCancelListener() {
-
-						@Override
-						public void onCancel(DialogInterface arg0) {
-							// nothing
-							
-						}}
-					).create();
-				dialog.show();
+				showDialog(DIALOG_EDIT_TASK_ID, bundle);
 			}});
-		
-		
 	}
+	
+	
 
+	class TaskToSpriteController implements ITasksListener, ITextSpriteListener{
+		@Override
+		public void onTaskAdded(TaskAdapter pTaskAdapter, Task pTask) {
+			addTextSpriteForTask(pTask);
+		}
+
+		// Methods for menu
+
+		@Override
+		public void onTaskDeleted(TaskAdapter pTaskAdapter, Task pTask) {
+			if(mTaskToSprite.containsKey(pTask)){
+				
+				this.removeTextSpriteForTask(pTask);
+//				TODO Do something with sprite
+			}
+			
+			
+		}
+		@Override
+		public void onTaskDescriptionUpdated(TaskAdapter pTaskAdapter,Task pTask, String pOldDescription, String pNewDescription) {
+			if(mTaskToSprite.containsKey(pTask)){
+				this.removeTextSpriteForTask(pTask);
+				this.addTextSpriteForTask(pTask);
+			}
+			
+		}
+
+		@Override
+		public void onTaskPositionUpdated(TaskAdapter pTaskAdapter,Task pTask, float pOldX, float pOldY, float pNewX, float pNewY) {
+			if(mTaskToSprite.containsKey(pTask)){
+				final TextSprite textSprite = mTaskToSprite.get(pTask);
+				textSprite.setPosition(pNewX, pNewY);
+			}
+			
+		}
+
+		
+
+		
+		private void addTextSpriteForTask(Task pTask){
+			final TextSprite textSprite = new TextSprite(pTask.getDescription(), pTask.getX(), pTask.getY(), mFont, mTaskTextureRegion, getVertexBufferObjectManager());
+			textSprite.setIOnAreaTouchListener(new TextSpriteController(this, true, true));
+			textSprite.setUserData(pTask);
+			
+			mTaskToSprite.put(pTask, textSprite);
+			mScene.attachChild(textSprite);
+			mScene.registerTouchArea(textSprite);
+		}
+		
+		private void removeTextSpriteForTask(Task pTask){
+			if(mTaskToSprite.containsKey(pTask)){
+				final TextSprite textSprite = mTaskToSprite.get(pTask);
+				mTaskToSprite.remove(pTask);
+				mScene.detachChild(textSprite);
+				mScene.unregisterTouchArea(textSprite);
+				textSprite.dispose();
+//				TODO Do something with sprite
+			}
+			
+		}
+		
+		
+		@Override
+		public void onTextSpritePositionChanged(TextSprite pTextSprite, float pDistanceX, float pDistanceY) {
+			if (pTextSprite.getUserData() instanceof Task){
+				Task task = (Task) pTextSprite.getUserData();
+				try {
+					mTaskAdapter.updateTaskPosition(task.getID(), pTextSprite.getX(), pTextSprite.getY());
+				} catch (UnknownTaskExeption e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			
+		}
+
+		
+		@Override
+		public void onTextSpriteScaleChanged(TextSprite pTextSprite,	float pStartScaleX, float pStartScaleY, float pZoomFactor) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+		@Override
+		public void onTextSpriteHold(TextSprite pTextSprite) {
+			if (pTextSprite.getUserData() instanceof Task){
+				Task task = (Task) pTextSprite.getUserData();
+				final Bundle bundle = new Bundle();
+				bundle.putSerializable(KEY_TASK, task);
+				runOnUiThread(new Runnable(){
+					@Override
+					public void run() {
+						showDialog(DIALOG_CONTEXT_ID, bundle);
+						
+					}});
+			}
+			
+		}
+	}
 	
 	class TouchController implements IOnSceneTouchListener,IScrollDetectorListener, IPinchZoomDetectorListener, IHoldDetectorListener{
 

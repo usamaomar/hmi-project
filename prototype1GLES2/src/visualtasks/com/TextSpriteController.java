@@ -55,7 +55,7 @@ public class TextSpriteController implements IOnAreaTouchListener, IClickDetecto
 	@Override
 	public void onPinchZoomFinished(PinchZoomDetector arg0, TouchEvent arg1,float pZoomFactor) {
 		if (mTextSprite != null){
-			mITextSpriteListener.afterTextSpriteScaleChanged(mTextSprite, mStartScaleX, mStartScaleY, pZoomFactor);
+			mITextSpriteListener.onTextSpriteScaleChanged(mTextSprite, mStartScaleX, mStartScaleY, pZoomFactor);
 		}
 	}
 	
@@ -107,7 +107,7 @@ public class TextSpriteController implements IOnAreaTouchListener, IClickDetecto
 	public void onScrollFinished(ScrollDetector pScrollDetector,  final int pPointerID, final float pDistanceX, final float pDistanceY) {
 		if(mTextSprite != null){
 			mTextSprite.setPosition(mTextSprite.getX() + pDistanceX, mTextSprite.getY() + pDistanceY);
-			mITextSpriteListener.afterTextSpritePositionChanged(mTextSprite, pDistanceX, pDistanceY);
+			mITextSpriteListener.onTextSpritePositionChanged(mTextSprite, pDistanceX, pDistanceY);
 		}
 		
 	}
