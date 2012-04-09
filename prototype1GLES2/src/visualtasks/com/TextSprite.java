@@ -26,7 +26,7 @@ class TextSprite extends Sprite{
 	
 	private final Font mFont;
 	private Text mText;
-	private IOnAreaTouchListener mIOnAreaTouchListener;
+	
 	
 	public TextSprite(String pText, float pX, float pY, Font pFont,ITextureRegion pTextureRegion, VertexBufferObjectManager vBOM) {
 		super(pX,pY,pTextureRegion, vBOM);
@@ -35,33 +35,36 @@ class TextSprite extends Sprite{
 		this.mText = new Text(0, 0, this.mFont, pText,	new TextOptions(AutoWrap.WORDS, this.getWidth(), 4, HorizontalAlign.CENTER),vBOM);
 		
 		this.attachChild(mText);
-		this.setScale(START_SCALE);
-		this.updateText();
+		
+		init();
 		
 	}
 	
+	public TextSprite(String pText,Font pFont,ITextureRegion pTextureRegion, VertexBufferObjectManager vBOM) {
+		this(pText, 0, 0, pFont, pTextureRegion, vBOM);
 	
-	public TextSprite(String pDescription,Font pFont,ITextureRegion pTextureRegion, VertexBufferObjectManager vBOM) {
-		this(pDescription, 0, 0, pFont, pTextureRegion, vBOM);
-		this.setPositionInCenter();
-		
+	}
+	public TextSprite(Font pFont,ITextureRegion pTextureRegion, VertexBufferObjectManager vBOM) {
+		this("", 0, 0, pFont, pTextureRegion, vBOM);
+	
 	}
 	
-
-	public void setIOnAreaTouchListener(IOnAreaTouchListener pIOnAreaTouchListener) {
-		this.mIOnAreaTouchListener = pIOnAreaTouchListener;
-	}
 	
-	private void setPositionInCenter() {
-		this.setPosition(this.getX() - this.getWidth() / 2f, this.getY() - this.getHeight()/ 2f);
-		
-	}
-
-
-
-	private void updateText(){
+	private void init(){
 		mText.setPosition(this.getWidth() / 2f - mText.getWidth() / 2f,	this.getHeight() / 2f - mText.getHeight() / 2f);
+		this.setScale(START_SCALE);
+		
 	}
+	
+	
+	
+
+	
+	
+	
+
+
+	
 	
 	public void setText(String pText){
 		this.mText.setText(pText);
@@ -71,10 +74,5 @@ class TextSprite extends Sprite{
 		return this.mText.getText().toString();
 	}
 	
-	@Override
-	public boolean onAreaTouched(TouchEvent pSceneTouchEvent,float pTouchAreaLocalX, float pTouchAreaLocalY) {
-		// TODO Auto-generated method stub
-		return mIOnAreaTouchListener.onAreaTouched(pSceneTouchEvent, this, pTouchAreaLocalX, pTouchAreaLocalY);
-		
-	}
+	
 }

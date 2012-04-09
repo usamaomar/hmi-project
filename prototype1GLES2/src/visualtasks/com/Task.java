@@ -65,7 +65,13 @@ public class Task implements Serializable {
 		return mID;
 	}
 	
-	
+	public interface ITaskChangeListener {
+
+		void onTaskAdded(Task pTask);
+		void onTaskDeleted(Task pTask );
+		void onTaskPositionUpdated(Task pTask, float pOldX, float pOldY, float pNewX, float pNewY);
+		void onTaskDescriptionUpdated(Task pTask, String pOldDescription, String pNewDescription);
+	}
 	
 	
 
