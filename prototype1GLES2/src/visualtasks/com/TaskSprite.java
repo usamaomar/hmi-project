@@ -18,9 +18,9 @@ import android.os.Bundle;
 public class TaskSprite extends TextSprite implements IClickDetectorListener,IPinchZoomDetectorListener, IHoldDetectorListener, IScrollDetectorListener{
 	
 	private static final int TRIGGER_HOLD_MIN_MILISECONDS = 300;
-	private static final float SCALE_MIN = 0.5f;
-	private static final float SCALE_MAX = 1.5f;
-	private final static float START_SCALE = 0.5f;
+	private static final float SCALE_MIN = 1f;
+	private static final float SCALE_MAX = 3f;
+	private final static float SCALE_FACTOR = 0.5f;
 	private HoldDetector mHoldDetector; 
 	private PinchZoomDetector mPinchZoomDetector;
 	private ScrollDetector mScrollDetector;
@@ -38,7 +38,7 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 	}
 	
 	private void init(){
-		this.setScale(START_SCALE);
+		this.setScale(SCALE_FACTOR);
 		this.mHoldDetector = new HoldDetector(this);
 		this.mPinchZoomDetector = new PinchZoomDetector(this);
 		this.mScrollDetector = new ScrollDetector(this);
@@ -56,12 +56,15 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 	
 	@Override
 	public void onPinchZoom(PinchZoomDetector arg0, TouchEvent arg1, float pZoomFactor) {
-		float scaleX = Math.max(Math.min(pZoomFactor * mStartScaleX, SCALE_MAX),SCALE_MIN);
-		float scaleY = Math.max(Math.min(pZoomFactor * mStartScaleY, SCALE_MAX),SCALE_MIN);
+		// bound x and y
+		float scaleX = Math.max(Math.min(pZoomFactor * mStartScaleX, SCALE_MAX * SCALE_FACTOR),SCALE_MIN * SCALE_FACTOR);
+		float scaleY = Math.max(Math.min(pZoomFactor * mStartScaleY, SCALE_MAX * SCALE_FACTOR),SCALE_MIN * SCALE_FACTOR);
 		this.setScale(scaleX,  scaleY);
 				
 	
 	}
+	
+	
 	
 	@Override
 	public void onPinchZoomFinished(PinchZoomDetector arg0, TouchEvent arg1,float pZoomFactor) {
