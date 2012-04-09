@@ -51,8 +51,8 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	// Constants
 	// ===========================================================
 
-	private static final float CAMERA_HEIGHT = 720;
-	private static final float CAMERA_WIDTH = 1080;
+	private static final float CAMERA_HEIGHT = 800;
+	private static final float CAMERA_WIDTH = 1280;
 	private static final float CAMERA_ZOOM_FACTOR = 2f;
 	
 	private static final int TRIGGER_HOLD_MIN_MILISECONDS = 300;
@@ -160,7 +160,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		
 		//load background
 		this.mAutoParallaxBackgroundTexture = new BitmapTextureAtlas(this.getTextureManager(), 2048, 2048, TextureOptions.DEFAULT);
-		this.mParallaxLayerFront = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mAutoParallaxBackgroundTexture, this, "achtergrond1.png", 0, 0);
+		this.mParallaxLayerFront = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mAutoParallaxBackgroundTexture, this, "windows7.jpg", 0, 0);
 		mAutoParallaxBackgroundTexture.load();
 	}
 	
@@ -263,6 +263,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	        Dialog dialog = new Dialog(this);
 	        dialog.setContentView(R.layout.contextmenu);
 	        dialog.setTitle(R.string.dialog_edit_task);
+	        dialog.setCancelable(true);
 	
 	        //set up buttons
 	        Button editTitle = (Button) dialog.findViewById(R.id.edit_name);
@@ -287,9 +288,18 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	        complete.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View arg0) {
-					// afhandelen completen task
+					Visualtasks.this.dismissDialog(DIALOG_CONTEXT_ID);
+					Visualtasks.this.deleteTask(task1);
 					
 				}});
+	        
+	        dialog.setOnCancelListener( new OnCancelListener() {
+	        	 
+	            public void onCancel(DialogInterface dialog) {
+	                // Cancel
+	            }
+	        });
+	        
 	        return dialog;
 		}
 		return super.onCreateDialog(id, bundle);
