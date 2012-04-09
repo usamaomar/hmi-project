@@ -186,12 +186,16 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		
 		
 		//this.mScene.registerUpdateHandler(mHoldDetector);
-		updateAllTaskSpritesForTasks(this.mTaskList);
+		
 		return this.mScene;
 	}
 	
 		
-	
+	@Override
+	public synchronized void onGameCreated() {
+		updateAllTaskSpritesForTasks(this.mTaskList);
+		super.onGameCreated();
+	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
