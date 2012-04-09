@@ -312,8 +312,11 @@ public class Visualtasks extends SimpleBaseGameActivity {
 
 	public void sortTasks(){
 		Collections.sort(mTaskList);
+		
+		float urgencyOffset = mTaskList.isEmpty()? 0 :mTaskList.get(mTaskList.size()-1).getUrgency();
 		int i = 0;
 		for (Task task : mTaskList){
+			task.setUrgency(task.getUrgency() - urgencyOffset);
 			if(mTaskToSprite.containsKey(task)){
 				TaskSprite taskSprite = mTaskToSprite.get(task);
 				this.mScene.detachChild(taskSprite);
