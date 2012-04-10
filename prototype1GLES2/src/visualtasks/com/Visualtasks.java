@@ -328,6 +328,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	private void addTask(String description, float pX, float pY){
 		Task task = new Task(0,description, pX, pY);
 		this.mTaskList.add(task);
+		task.setSelected(true);
 		this.addTaskSpriteForTask(task);
 		this.reorderTasks();
 	}
@@ -373,23 +374,26 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	public synchronized void reorderTasks(){
 			Collections.sort(mTaskList, new Task.UrgencyComparator());
 			
-			float urgencyOffset = mTaskList.isEmpty()? 0 :mTaskList.get(0).getUrgency();
+			final float minUrgency = mTaskList.isEmpty()? 0 :mTaskList.get(0).getUrgency();
+			final float maxUrgency = mTaskList.isEmpty()? 0 :mTaskList.get(mTaskList.size()-1).getUrgency();
+			float urgencyOffset = minUrgency > 0 ? minUrgency : maxUrgency < 0 ? maxUrgency : 0 ;
+			
 			
 			Collections.sort(mTaskList, new Task.DefaultComparator());
 			
 			
-				for (int i = mTaskList.size()-1;i>=0;i--){
-					final Task task = mTaskList.get(i);
-					task.setUrgency(task.getUrgency() - urgencyOffset);
-					if(mTaskToSprite.containsKey(task)){
-						final TaskSprite taskSprite = Visualtasks.this.mTaskToSprite.get(task);
-					
-						this.mScene.detachChild(taskSprite);
-						this.mScene.unregisterTouchArea(taskSprite);
-						this.mScene.attachChild(taskSprite);
-						this.mScene.registerTouchArea(taskSprite);
-					}
+			for (int i = mTaskList.size()-1;i>=0;i--){
+				final Task task = mTaskList.get(i);
+				task.setUrgency(task.getUrgency() - urgencyOffset);
+				if(mTaskToSprite.containsKey(task)){
+					final TaskSprite taskSprite = Visualtasks.this.mTaskToSprite.get(task);
+				
+					this.mScene.detachChild(taskSprite);
+					this.mScene.unregisterTouchArea(taskSprite);
+					this.mScene.attachChild(taskSprite);
+					this.mScene.registerTouchArea(taskSprite);
 				}
+			}
 				
 			
 		

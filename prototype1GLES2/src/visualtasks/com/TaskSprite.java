@@ -18,7 +18,8 @@ import android.os.Bundle;
 public class TaskSprite extends TextSprite implements IClickDetectorListener,IPinchZoomDetectorListener, IHoldDetectorListener, IScrollDetectorListener{
 	
 	private final static float SCALE_FACTOR = 0.5f;
-	private static final float SCALE_MAX = 2f;
+	private static final float SCALE_MAX = 4f;
+	private static final float SCALE_DEFAULT = 2f;
 	private static final float SCALE_MIN = 1f;
 	private static final int TRIGGER_HOLD_MIN_MILISECONDS = 300;
 	private boolean isTouched; 
@@ -38,11 +39,11 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 	}
 	
 	private float getScaleFromUrgency(Float urgency){
-		return (SCALE_MAX-urgency) * SCALE_FACTOR;
+		return (SCALE_DEFAULT-urgency) * SCALE_FACTOR;
 	}
 		
 	private float getUrgencyFromScale(Float scale){
-		return SCALE_MAX-(scale/SCALE_FACTOR);
+		return SCALE_DEFAULT-(scale/SCALE_FACTOR);
 	}
 	
 	
