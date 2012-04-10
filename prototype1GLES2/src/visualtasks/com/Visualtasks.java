@@ -2,10 +2,12 @@ package visualtasks.com;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 
 import org.andengine.engine.Engine;
 import org.andengine.engine.camera.ZoomCamera;
+import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.EngineOptions.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
@@ -32,6 +34,8 @@ import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegion
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.ui.dialog.StringInputDialogBuilder;
+import org.andengine.util.adt.list.ShiftList;
+import org.andengine.util.adt.list.SmartList;
 import org.andengine.util.call.Callback;
 
 import android.app.Dialog;
@@ -66,9 +70,10 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	public static final String KEY_TASK_X = "tX";
 	public static final String KEY_TASK_Y = "tY";
 	
-	
-	private ArrayList<Task> mTaskList;
-	
+	private boolean mTaskSpriteReorderNeeded = false;
+	private SmartList<Task> mTaskList;
+	private SmartList<Task> mUrgencySortedTaskList;
+	private Task mSelectedTask;
 	private BitmapTextureAtlas mAutoParallaxBackgroundTexture;
 	private BitmapTextureAtlas mBitmapTextureAtlas;
 	private Font mFont;
@@ -100,7 +105,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	@Override
 	public Engine onCreateEngine(EngineOptions pEngineOptions) {
 
-		if (mTaskList == null) this.mTaskList = new ArrayList<Task>();
+		if (mTaskList == null) this.mTaskList = new SmartList<Task>();
 		
 		return super.onCreateEngine(pEngineOptions);
 	}
@@ -109,13 +114,12 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	protected void onCreate(Bundle pSavedInstanceState) {
 		this.mSavedInstanceState = pSavedInstanceState;
 		if (this.mSavedInstanceState != null && mSavedInstanceState.containsKey(KEY_TASK_LIST)){
-			this.mTaskList = (ArrayList<Task>) mSavedInstanceState.getSerializable(KEY_TASK_LIST);
+			this.mTaskList = (SmartList<Task>) mSavedInstanceState.getSerializable(KEY_TASK_LIST);
 			
 		}
 		
 		super.onCreate(pSavedInstanceState);
 	}
-	
 	
 	
 	
@@ -192,11 +196,19 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		return this.mScene;
 	}
 	
-		
+	
 	@Override
 	public synchronized void onGameCreated() {
-		updateAllTaskSpritesForTasks(this.mTaskList);
+		this.addAllTaskSpritesForTasks();
 		super.onGameCreated();
+	}
+	
+	public synchronized void setSelectedTask(Task task){
+		if (this.mSelectedTask != null){
+			this.mSelectedTask.setSelected(false);
+		}
+		this.mSelectedTask = task;
+		this.mSelectedTask.setSelected(true);
 	}
 
 	@Override
@@ -249,8 +261,8 @@ public class Visualtasks extends SimpleBaseGameActivity {
 							public void onCallback(String pCallbackValue) {
 								
 									task.setDescription(pCallbackValue);
-									Visualtasks.this.updateTaskSpriteForTask(task);
-									Visualtasks.this.sortTasks();
+									Visualtasks.this.addTaskSpriteForTask(task);
+									
 									Visualtasks.this.removeDialog(DIALOG_EDIT_TASK_ID);
 								
 							}},   
@@ -310,37 +322,24 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	}
 
 
-	public void sortTasks(){
-		Collections.sort(mTaskList);
-		
-		float urgencyOffset = mTaskList.isEmpty()? 0 :mTaskList.get(mTaskList.size()-1).getUrgency();
-		int i = 0;
-		for (Task task : mTaskList){
-			task.setUrgency(task.getUrgency() - urgencyOffset);
-			if(mTaskToSprite.containsKey(task)){
-				TaskSprite taskSprite = mTaskToSprite.get(task);
-				this.mScene.detachChild(taskSprite);
-				this.mScene.unregisterTouchArea(taskSprite);
-				this.mScene.attachChild(taskSprite);
-				this.mScene.registerTouchArea(taskSprite);
-			}
-			i++;
-		}
-	}
+	
+	
+	
 	private void addTask(String description, float pX, float pY){
 		Task task = new Task(0,description, pX, pY);
 		this.mTaskList.add(task);
-		this.updateTaskSpriteForTask(task);
-		this.sortTasks();
+		this.addTaskSpriteForTask(task);
+		this.reorderTasks();
 	}
 	
-	private void updateAllTaskSpritesForTasks(final ArrayList<Task> pTasks){
-		for (Task task : pTasks){
-			updateTaskSpriteForTask(task);
+	private void addAllTaskSpritesForTasks(){
+		for (int i = mTaskList.size()-1;i>=0;i--){
+			addTaskSpriteForTask(mTaskList.get(i));
 		}
-		this.sortTasks();
+		this.reorderTasks();
+		
 	}
-	private void updateTaskSpriteForTask(final Task pTask){
+	private void addTaskSpriteForTask(final Task pTask){
 		this.removeTaskSpriteForTask(pTask);
 		final TaskSprite taskSprite = new TaskSprite(this, pTask, mFont, mTaskTextureRegion, getVertexBufferObjectManager());
 		
@@ -350,6 +349,8 @@ public class Visualtasks extends SimpleBaseGameActivity {
 			
 	}
 	
+	
+	
 	private void deleteTask(Task pTask){
 		this.mTaskList.remove(pTask);
 		this.removeTaskSpriteForTask(pTask);
@@ -357,18 +358,42 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	
 	private void removeTaskSpriteForTask(Task pTask){
 		if(mTaskToSprite.containsKey(pTask)){
-			final TextSprite textSprite = Visualtasks.this.mTaskToSprite.get(pTask);
-			Visualtasks.this.mTaskToSprite.remove(pTask);
-			Visualtasks.this.mScene.detachChild(textSprite);
-			Visualtasks.this.mScene.unregisterTouchArea(textSprite);
-			textSprite.dispose();
+			final TaskSprite taskSprite = Visualtasks.this.mTaskToSprite.get(pTask);
+			
+			Visualtasks.this.mScene.detachChild(taskSprite);
+			Visualtasks.this.mScene.unregisterTouchArea(taskSprite);
+			taskSprite.dispose();
 			this.mTaskToSprite.remove(pTask);
 //			TODO Do something with sprite
 		}
 		
 	}
 
-
+	
+	public synchronized void reorderTasks(){
+			Collections.sort(mTaskList, new Task.UrgencyComparator());
+			
+			float urgencyOffset = mTaskList.isEmpty()? 0 :mTaskList.get(0).getUrgency();
+			
+			Collections.sort(mTaskList, new Task.DefaultComparator());
+			
+			
+				for (int i = mTaskList.size()-1;i>=0;i--){
+					final Task task = mTaskList.get(i);
+					task.setUrgency(task.getUrgency() - urgencyOffset);
+					if(mTaskToSprite.containsKey(task)){
+						final TaskSprite taskSprite = Visualtasks.this.mTaskToSprite.get(task);
+					
+						this.mScene.detachChild(taskSprite);
+						this.mScene.unregisterTouchArea(taskSprite);
+						this.mScene.attachChild(taskSprite);
+						this.mScene.registerTouchArea(taskSprite);
+					}
+				}
+				
+			
+		
+	}
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		outState.putSerializable(KEY_TASK_LIST, mTaskList);
@@ -404,7 +429,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 			this.mHoldDetector.setTriggerHoldMinimumMilliseconds(TRIGGER_HOLD_MIN_MILISECONDS);
 			this.mSurfaceScrollDetector = new SurfaceScrollDetector(this);
 			//this.mPinchZoomDetector = new PinchZoomDetector(this);
-			this.mScene.setTouchAreaBindingOnActionDownEnabled(false);
+			this.mScene.setTouchAreaBindingOnActionDownEnabled(true);
 			this.mScene.setTouchAreaBindingOnActionMoveEnabled(false);
 			
 			

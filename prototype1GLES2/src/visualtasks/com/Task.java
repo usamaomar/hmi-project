@@ -1,8 +1,9 @@
 package visualtasks.com;
 
 import java.io.Serializable;
+import java.util.Comparator;
 
-public class Task implements Comparable<Task>, Serializable {
+public class Task implements  Serializable {
 
 	/**
 	 * 
@@ -19,7 +20,7 @@ public class Task implements Comparable<Task>, Serializable {
 	private float mX, mY;
 
 	private int mStatus;
-	
+	private boolean mSelected;
 	public Task(int pID, String pDescription, float pX, float pY) {
 		super();
 		this.mDescription = pDescription;
@@ -27,6 +28,8 @@ public class Task implements Comparable<Task>, Serializable {
 		this.mY = pY;
 		this.mID = pID;
 	}
+	
+	
 
 	public String getDescription() {
 		return mDescription;
@@ -66,6 +69,13 @@ public class Task implements Comparable<Task>, Serializable {
 		
 	}
 	
+	public void setSelected(boolean pSelected) {
+		this.mSelected = pSelected;
+	}
+	
+	public boolean isSelected() {
+		return mSelected;
+	}
 	public void setY(float pY){
 		mY = pY;
 	}
@@ -84,15 +94,32 @@ public class Task implements Comparable<Task>, Serializable {
 
 	
 
-	@Override
-	public int compareTo(Task another) {
-		// TODO Auto-generated method stub
+	
+	
+	static public class DefaultComparator extends UrgencyComparator {
+
+		@Override
+		public int compare(Task lhs, Task rhs) {
+			// TODO Auto-generated method stub
+			if (lhs.isSelected() && !rhs.isSelected()){
+				return -1;
+			} else if (!lhs.isSelected() && rhs.isSelected()){
+				return 1;
+			} else return super.compare(lhs, rhs);
+			
+		}
 		
-		return (int) Math.signum(another.getUrgency() - this.getUrgency());
 	}
 	
-	
-	
+	static public class UrgencyComparator implements Comparator<Task> {
+
+		@Override
+		public int compare(Task lhs, Task rhs) {
+			// TODO Auto-generated method stub
+			return (int) Math.signum(lhs.getUrgency() - rhs.getUrgency());
+		}
+		
+	}
 	
 
 }
