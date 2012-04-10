@@ -1,13 +1,10 @@
 package visualtasks.com;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 
 import org.andengine.engine.Engine;
 import org.andengine.engine.camera.ZoomCamera;
-import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.EngineOptions.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
@@ -34,7 +31,6 @@ import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegion
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.ui.dialog.StringInputDialogBuilder;
-import org.andengine.util.adt.list.ShiftList;
 import org.andengine.util.adt.list.SmartList;
 import org.andengine.util.call.Callback;
 
@@ -50,6 +46,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.Toast;
 
 public class Visualtasks extends SimpleBaseGameActivity {
 	// ===========================================================
@@ -157,7 +154,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		this.mBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(),512, 512, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 		
 		final ITexture strokeFontTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, TextureOptions.BILINEAR);
-		this.mTaskTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mBitmapTextureAtlas, this, "bubble3.png",0, 0);
+		this.mTaskTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mBitmapTextureAtlas, this, "bubble4.png",0, 0);
 		this.mBitmapTextureAtlas.load();
 		
 		//load font 
@@ -296,7 +293,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 				public void onClick(View arg0) {
 						Visualtasks.this.dismissDialog(DIALOG_CONTEXT_ID);
 						Visualtasks.this.deleteTask(task1);
-					
+						Toast.makeText(getApplicationContext(), task1.getDescription() + " deleted.", Toast.LENGTH_LONG).show();
 					
 				}});
 	        
@@ -306,6 +303,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 				public void onClick(View arg0) {
 					Visualtasks.this.dismissDialog(DIALOG_CONTEXT_ID);
 					Visualtasks.this.deleteTask(task1);
+					Toast.makeText(getApplicationContext(), task1.getDescription() + " completed.", Toast.LENGTH_LONG).show();
 					
 				}});
 	        
