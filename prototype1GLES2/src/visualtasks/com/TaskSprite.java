@@ -18,9 +18,9 @@ import android.os.Bundle;
 public class TaskSprite extends TextSprite implements IClickDetectorListener,IPinchZoomDetectorListener, IHoldDetectorListener, IScrollDetectorListener{
 	
 	private final static float SCALE_FACTOR = 0.5f;
-	private static final float SCALE_MAX = 4f;
-	private static final float SCALE_DEFAULT = 2f;
-	private static final float SCALE_MIN = 1f;
+	private static final float SCALE_MAX = 5f;
+	private static final float SCALE_DEFAULT = 1f;
+	private static final float SCALE_MIN = 0.5f;
 	private static final int TRIGGER_HOLD_MIN_MILISECONDS = 300;
 	private boolean isTouched; 
 	private Visualtasks mContext;

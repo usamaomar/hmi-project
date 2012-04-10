@@ -56,9 +56,9 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	// Constants
 	// ===========================================================
 
-	private static final float CAMERA_HEIGHT = 800;
-	private static final float CAMERA_WIDTH = 1280;
-	private static final float CAMERA_ZOOM_FACTOR = 2f;
+	private static final float CAMERA_HEIGHT = 723;
+	private static final float CAMERA_WIDTH = 1024 ;
+	private static final float CAMERA_ZOOM_FACTOR = 1f;
 	
 	private static final int TRIGGER_HOLD_MIN_MILISECONDS = 300;
 	
@@ -491,8 +491,8 @@ public class Visualtasks extends SimpleBaseGameActivity {
 //						this.mHoldDetector.setEnabled(true);
 //					}
 					this.mHoldDetector.onTouchEvent(pSceneTouchEvent);
-					if(!mHoldDetector.isHolding())
-						this.mSurfaceScrollDetector.onTouchEvent(pSceneTouchEvent);
+//					if(!mHoldDetector.isHolding())
+//						this.mSurfaceScrollDetector.onTouchEvent(pSceneTouchEvent);
 
 			//	}
 			//} else {
