@@ -154,7 +154,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		this.mBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(),512, 512, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 		
 		final ITexture strokeFontTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, TextureOptions.BILINEAR);
-		this.mTaskTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mBitmapTextureAtlas, this, "bubble4.png",0, 0);
+		this.mTaskTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mBitmapTextureAtlas, this, "bubble.png",0, 0);
 		this.mBitmapTextureAtlas.load();
 		
 		//load font 
@@ -163,7 +163,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		
 		//load background
 		this.mAutoParallaxBackgroundTexture = new BitmapTextureAtlas(this.getTextureManager(), 2048, 2048, TextureOptions.DEFAULT);
-		this.mParallaxLayerFront = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mAutoParallaxBackgroundTexture, this, "windows7.jpg", 0, 0);
+		this.mParallaxLayerFront = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mAutoParallaxBackgroundTexture, this, "Underwater.png", 0, 0);
 		mAutoParallaxBackgroundTexture.load();
 	}
 	
@@ -293,7 +293,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 				public void onClick(View arg0) {
 						Visualtasks.this.dismissDialog(DIALOG_CONTEXT_ID);
 						Visualtasks.this.deleteTask(task1);
-						Toast.makeText(getApplicationContext(), task1.getDescription() + " deleted.", Toast.LENGTH_LONG).show();
+						Toast.makeText(getApplicationContext(), task1.getDescription() + " deleted.", Toast.LENGTH_SHORT).show();
 					
 				}});
 	        
@@ -301,10 +301,10 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	        complete.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View arg0) {
-					Visualtasks.this.dismissDialog(DIALOG_CONTEXT_ID);
-					Visualtasks.this.deleteTask(task1);
-					Toast.makeText(getApplicationContext(), task1.getDescription() + " completed.", Toast.LENGTH_LONG).show();
-					
+						Visualtasks.this.dismissDialog(DIALOG_CONTEXT_ID);
+						Visualtasks.this.deleteTask(task1);
+						Toast.makeText(getApplicationContext(), task1.getDescription() + " completed.", Toast.LENGTH_SHORT).show();
+
 				}});
 	        
 	        dialog.setOnCancelListener( new OnCancelListener() {
@@ -351,8 +351,10 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	
 	
 	private void deleteTask(Task pTask){
-		this.mTaskList.remove(pTask);
-		this.removeTaskSpriteForTask(pTask);
+		synchronized(mTaskList){
+			this.mTaskList.remove(pTask);
+			this.removeTaskSpriteForTask(pTask);
+		}
 	}
 	
 	private void removeTaskSpriteForTask(Task pTask){
@@ -374,7 +376,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 			
 			final float minUrgency = mTaskList.isEmpty()? 0 :mTaskList.get(0).getUrgency();
 			final float maxUrgency = mTaskList.isEmpty()? 0 :mTaskList.get(mTaskList.size()-1).getUrgency();
-			float urgencyOffset = minUrgency > 0 ? minUrgency : maxUrgency < 0 ? maxUrgency : 0 ;
+			float urgencyOffset = 0; //minUrgency > 0 ? minUrgency : maxUrgency < 0 ? maxUrgency : 0 ;
 			
 			
 			Collections.sort(mTaskList, new Task.DefaultComparator());
