@@ -258,6 +258,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 							public void onCallback(String pCallbackValue) {
 								
 									task.setDescription(pCallbackValue);
+									Visualtasks.this.removeTaskSpriteForTask(task);
 									Visualtasks.this.addTaskSpriteForTask(task);
 									
 									Visualtasks.this.removeDialog(DIALOG_EDIT_TASK_ID);
@@ -339,9 +340,8 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		
 	}
 	private void addTaskSpriteForTask(final Task pTask){
-		this.removeTaskSpriteForTask(pTask);
-		final TaskSprite taskSprite = new TaskSprite(this, pTask, mFont, mTaskTextureRegion, getVertexBufferObjectManager());
 		
+		final TaskSprite taskSprite = new TaskSprite(this, pTask, mFont, mTaskTextureRegion, getVertexBufferObjectManager());
 		mTaskToSprite.put(pTask, taskSprite);
 		Visualtasks.this.mScene.attachChild(taskSprite);
 		Visualtasks.this.mScene.registerTouchArea(taskSprite);
@@ -357,43 +357,59 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		}
 	}
 	
-	private void removeTaskSpriteForTask(Task pTask){
+	private void removeTaskSpriteForTask(final Task pTask){
 		if(mTaskToSprite.containsKey(pTask)){
-			final TaskSprite taskSprite = Visualtasks.this.mTaskToSprite.get(pTask);
-			
-			Visualtasks.this.mScene.detachChild(taskSprite);
-			Visualtasks.this.mScene.unregisterTouchArea(taskSprite);
-			taskSprite.dispose();
-			this.mTaskToSprite.remove(pTask);
-//			TODO Do something with sprite
-		}
+			this.runOnUpdateThread(new Runnable(){
+				@Override
+				public void run() {
+					final TaskSprite taskSprite = Visualtasks.this.mTaskToSprite.get(pTask);
+					
+					Visualtasks.this.mScene.detachChild(taskSprite);
+					Visualtasks.this.mScene.unregisterTouchArea(taskSprite);
+					taskSprite.dispose();
+					Visualtasks.this.mTaskToSprite.remove(pTask);
+	
+				}});
+		}	
 		
 	}
 
 	
-	public synchronized void reorderTasks(){
-			Collections.sort(mTaskList, new Task.UrgencyComparator());
-			
-			final float minUrgency = mTaskList.isEmpty()? 0 :mTaskList.get(0).getUrgency();
-			final float maxUrgency = mTaskList.isEmpty()? 0 :mTaskList.get(mTaskList.size()-1).getUrgency();
-			float urgencyOffset = 0; //minUrgency > 0 ? minUrgency : maxUrgency < 0 ? maxUrgency : 0 ;
-			
-			
-			Collections.sort(mTaskList, new Task.DefaultComparator());
-			
-			
-			for (int i = mTaskList.size()-1;i>=0;i--){
-				final Task task = mTaskList.get(i);
-				task.setUrgency(task.getUrgency() - urgencyOffset);
-				if(mTaskToSprite.containsKey(task)){
-					final TaskSprite taskSprite = Visualtasks.this.mTaskToSprite.get(task);
-				
-					this.mScene.detachChild(taskSprite);
-					this.mScene.unregisterTouchArea(taskSprite);
-					this.mScene.attachChild(taskSprite);
-					this.mScene.registerTouchArea(taskSprite);
+	public void reorderTasks(){
+		runOnUpdateThread(new Runnable(){
+
+			@Override
+			public void run() {
+				synchronized(mTaskList){
+					Collections.sort(mTaskList, new Task.UrgencyComparator());
+					
+					final float minUrgency = mTaskList.isEmpty()? 0 :mTaskList.get(0).getUrgency();
+					final float maxUrgency = mTaskList.isEmpty()? 0 :mTaskList.get(mTaskList.size()-1).getUrgency();
+					float urgencyOffset = 0; //minUrgency > 0 ? minUrgency : maxUrgency < 0 ? maxUrgency : 0 ;
+					
+					
+					Collections.sort(mTaskList, new Task.DefaultComparator());
+					
+					
+					for (int i = mTaskList.size()-1;i>=0;i--){
+						final Task task = mTaskList.get(i);
+						task.setUrgency(task.getUrgency() - urgencyOffset);
+						if(mTaskToSprite.containsKey(task)){
+							final TaskSprite taskSprite = Visualtasks.this.mTaskToSprite.get(task);
+						
+							Visualtasks.this.mScene.detachChild(taskSprite);
+							Visualtasks.this.mScene.unregisterTouchArea(taskSprite);
+							Visualtasks.this.mScene.attachChild(taskSprite);
+							Visualtasks.this.mScene.registerTouchArea(taskSprite);
+						}
+					}
 				}
-			}
+				
+			}});
+		
+			
+		
+		
 				
 			
 		
