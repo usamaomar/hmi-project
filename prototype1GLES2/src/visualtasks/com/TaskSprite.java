@@ -3,6 +3,7 @@ package visualtasks.com;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.input.touch.detector.ClickDetector;
 import org.andengine.input.touch.detector.ClickDetector.IClickDetectorListener;
+import org.andengine.input.touch.detector.ContinuousHoldDetector;
 import org.andengine.input.touch.detector.HoldDetector;
 import org.andengine.input.touch.detector.HoldDetector.IHoldDetectorListener;
 import org.andengine.input.touch.detector.PinchZoomDetector;
@@ -24,7 +25,7 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 	private static final int TRIGGER_HOLD_MIN_MILISECONDS = 300;
 	private boolean isTouched; 
 	private Visualtasks mContext;
-	private HoldDetector mHoldDetector;
+	private ContinuousHoldDetector mHoldDetector;
 
 	private PinchZoomDetector mPinchZoomDetector;
 	private ScrollDetector mScrollDetector;
@@ -49,10 +50,12 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 	
 	private void init(){
 		this.setScale(SCALE_FACTOR);
-		this.mHoldDetector = new HoldDetector(this);
+		this.mHoldDetector = new ContinuousHoldDetector(this);
 		this.mPinchZoomDetector = new PinchZoomDetector(this);
 		this.mScrollDetector = new ScrollDetector(this);
 		this.mHoldDetector.setTriggerHoldMinimumMilliseconds(TRIGGER_HOLD_MIN_MILISECONDS);
+		this.registerUpdateHandler(mHoldDetector);
+		
 	}
 	
 	
@@ -116,31 +119,30 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 	@Override
 	public void onHold(HoldDetector arg0, long arg1, int arg2, float arg3,
 			float arg4) {
-		// TODO Auto-generated method stub
+		
 		
 	}
 	@Override
 	public void onHoldFinished(HoldDetector arg0, long arg1, int arg2,
 			float arg3, float arg4) {
-		// TODO Auto-generated method stub
+	
 		
 	}
 	
 	@Override
 	public void onHoldStarted(HoldDetector arg0, int arg1, float arg2,
 			float arg3) {
-		
-			this.mHoldDetector.setEnabled(false);
-			final Bundle bundle = new Bundle();
-			bundle.putSerializable(Visualtasks.KEY_TASK, this.mTask);
-			this.mContext.runOnUiThread(new Runnable(){
-				@Override
-				public void run() {
-					TaskSprite.this.mContext.removeDialog(Visualtasks.DIALOG_CONTEXT_ID);
-					TaskSprite.this.mContext.showDialog(Visualtasks.DIALOG_CONTEXT_ID, bundle);
-					
-				}});
-			this.mHoldDetector.setEnabled(true);
+		this.mHoldDetector.setEnabled(false);
+		final Bundle bundle = new Bundle();
+		bundle.putSerializable(Visualtasks.KEY_TASK, this.mTask);
+		this.mContext.runOnUiThread(new Runnable(){
+			@Override
+			public void run() {
+				TaskSprite.this.mContext.removeDialog(Visualtasks.DIALOG_CONTEXT_ID);
+				TaskSprite.this.mContext.showDialog(Visualtasks.DIALOG_CONTEXT_ID, bundle);
+				
+			}});
+		this.mHoldDetector.setEnabled(true);
 		
 	}
 	@Override

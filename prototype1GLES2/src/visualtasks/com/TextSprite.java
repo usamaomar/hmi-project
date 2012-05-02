@@ -32,7 +32,7 @@ class TextSprite extends Sprite{
 		super(pX,pY,pTextureRegion, vBOM);
 		this.mFont = pFont;
 				
-		this.mText = new Text(0, 0, this.mFont, pText,	new TextOptions(AutoWrap.WORDS, this.getWidth(), 4, HorizontalAlign.CENTER),vBOM);
+		this.mText = new Text(0, 0, this.mFont, pText,	new TextOptions(AutoWrap.WORDS, this.getWidth(), HorizontalAlign.CENTER),vBOM);
 		
 		this.attachChild(mText);
 		
