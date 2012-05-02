@@ -278,6 +278,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	        dialog.setContentView(R.layout.contextmenu);
 	        dialog.setTitle(R.string.dialog_edit_task);
 	        dialog.setCancelable(true);
+	        dialog.setCanceledOnTouchOutside(true);
 	
 	        //set up buttons
 	        Button editTitle = (Button) dialog.findViewById(R.id.edit_name);
