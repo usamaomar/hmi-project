@@ -6,7 +6,7 @@ import java.util.HashMap;
 import org.andengine.engine.Engine;
 import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.engine.options.EngineOptions;
-import org.andengine.engine.options.EngineOptions.ScreenOrientation;
+import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
@@ -15,6 +15,7 @@ import org.andengine.entity.scene.background.ParallaxBackground.ParallaxEntity;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.input.touch.TouchEvent;
+import org.andengine.input.touch.detector.ContinuousHoldDetector;
 import org.andengine.input.touch.detector.HoldDetector;
 import org.andengine.input.touch.detector.HoldDetector.IHoldDetectorListener;
 import org.andengine.input.touch.detector.PinchZoomDetector;
@@ -439,15 +440,16 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	class TouchController implements IOnSceneTouchListener,IScrollDetectorListener, IPinchZoomDetectorListener, IHoldDetectorListener{
 
 		private int lastTouchId;
-		private HoldDetector mHoldDetector;
+		private ContinuousHoldDetector mHoldDetector;
 		private float mPinchZoomStartedCameraZoomFactor;
 		private Scene mScene;
 		//private PinchZoomDetector mPinchZoomDetector;
 		private SurfaceScrollDetector mSurfaceScrollDetector;
 		public TouchController(Scene pScene) {
 			this.mScene = pScene;
-			this.mHoldDetector = new HoldDetector(this);
+			this.mHoldDetector = new ContinuousHoldDetector(this);
 			this.mHoldDetector.setTriggerHoldMinimumMilliseconds(TRIGGER_HOLD_MIN_MILISECONDS);
+			this.mScene.registerUpdateHandler(mHoldDetector);
 			this.mSurfaceScrollDetector = new SurfaceScrollDetector(this);
 			//this.mPinchZoomDetector = new PinchZoomDetector(this);
 			this.mScene.setTouchAreaBindingOnActionDownEnabled(true);
