@@ -1,5 +1,9 @@
 package visualtasks.com;
 
+import org.andengine.engine.handler.physics.PhysicsHandler;
+import org.andengine.extension.physics.box2d.PhysicsConnector;
+import org.andengine.extension.physics.box2d.PhysicsFactory;
+import org.andengine.extension.physics.box2d.util.constants.PhysicsConstants;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.input.touch.detector.ClickDetector;
 import org.andengine.input.touch.detector.ClickDetector.IClickDetectorListener;
@@ -15,6 +19,12 @@ import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
 import android.os.Bundle;
+import android.util.Log;
+
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
+import com.badlogic.gdx.physics.box2d.FixtureDef;
 
 public class TaskSprite extends TextSprite implements IClickDetectorListener,IPinchZoomDetectorListener, IHoldDetectorListener, IScrollDetectorListener{
 	
@@ -22,28 +32,42 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 	private static final float SCALE_MAX = 5f;
 	private static final float SCALE_DEFAULT = 1f;
 	private static final float SCALE_MIN = 0.5f;
+	private static float VELOCITY;
+	private static int BOARDER = 200;
 	private static final int TRIGGER_HOLD_MIN_MILISECONDS = 300;
 	private boolean isTouched; 
 	private Visualtasks mContext;
 	private ContinuousHoldDetector mHoldDetector;
+	private final PhysicsHandler mPhysicsHandler;
 
 	private PinchZoomDetector mPinchZoomDetector;
 	private ScrollDetector mScrollDetector;
 	private float mStartScaleX, mStartScaleY;
 	private Task mTask;
+	private static final FixtureDef FIXTURE_DEF = PhysicsFactory.createFixtureDef(1, 0f, 0f);
+	private Body body;
+	
 	public TaskSprite(Visualtasks pContext, Task pTask, Font pFont,ITextureRegion pTextureRegion, VertexBufferObjectManager vBOM) {
 		super(pTask.getDescription(),pFont, pTextureRegion, vBOM);
 		this.mTask = pTask;
 		this.mContext = pContext;
+		this.mPhysicsHandler = new PhysicsHandler(this);
+		this.registerUpdateHandler(this.mPhysicsHandler);
+		VELOCITY = this.getScaleX()*this.getScaleX()*20;
+		this.mPhysicsHandler.setVelocity(0, VELOCITY);
+		
+		body = PhysicsFactory.createCircleBody(pContext.mPhysicsWorld, this, BodyType.DynamicBody, FIXTURE_DEF);
+		this.setUserData(body);
+		pContext.mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(this, body, true, true));
+		
 		init();
-		// TODO Auto-generated constructor stub
 	}
 	
-	private float getScaleFromUrgency(Float urgency){
+	private static float getScaleFromUrgency(Float urgency){
 		return (SCALE_DEFAULT-urgency) * SCALE_FACTOR;
 	}
 		
-	private float getUrgencyFromScale(Float scale){
+	private static float getUrgencyFromScale(Float scale){
 		return SCALE_DEFAULT-(scale/SCALE_FACTOR);
 	}
 	
@@ -89,6 +113,7 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 			
 			switch(pSceneTouchEvent.getAction()){
 			case TouchEvent.ACTION_DOWN:
+				this.mPhysicsHandler.setEnabled(false);
 			case TouchEvent.ACTION_MOVE:
 				if(this.mTask.isSelected() != true){
 					this.mTask.setSelected(true);
@@ -102,6 +127,7 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 					this.mTask.setSelected(false);
 					mContext.reorderTasks();
 				}
+				this.mPhysicsHandler.setEnabled(true);
 			}
 				
 		
@@ -147,16 +173,29 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 	}
 	@Override
 	protected void onManagedUpdate(float pSecondsElapsed) {
-		this.setPosition(mTask.getX(), mTask.getY());
-		this.setText(mTask.getDescription());
+		VELOCITY = this.getScaleX()*this.getScaleX()*20;
+		
+		if(this.mY < BOARDER) {
+			this.mPhysicsHandler.setVelocityY(0);
+			this.mPhysicsHandler.setVelocityX(0);
+		} else {
+			this.mPhysicsHandler.setVelocityY(-VELOCITY);
+		}
 			
+		//super.onManagedUpdate(pSecondsElapsed);
+		
+		//this.setPosition(mTask.getX(), mTask.getY());
+		//body.setTransform(new Vector2(200, 200), 0);
+		
+		this.setText(mTask.getDescription());
+		setSpritePosition(mTask.getX(), mTask.getY());
 			if(!this.mPinchZoomDetector.isZooming()){
 				this.setScale(this.getScaleFromUrgency(mTask.getUrgency()));
 			}
 		
 		super.onManagedUpdate(pSecondsElapsed);
-		
 	}
+	
 	@Override
 	public void onPinchZoom(PinchZoomDetector arg0, TouchEvent arg1, float pZoomFactor) {
 		// bound x and y
@@ -181,22 +220,23 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 		
 			this.mStartScaleX = this.getScaleX();
 			this.mStartScaleY = this.getScaleY();
-		
-	
 	}
+	
 	@Override
 	public void onScroll(ScrollDetector pScrollDetector,  final int pPointerID, final float pDistanceX, final float pDistanceY) {
 		
-		mTask.setX(this.getX() + pDistanceX);
-		mTask.setY(this.getY() + pDistanceY);
+		mTask.setX(mTask.getX() + pDistanceX);
+		mTask.setY(mTask.getY() + pDistanceY);
+		setSpritePosition(mTask.getX(), mTask.getY());
+
 		
 	}
 	@Override
 	public void onScrollFinished(ScrollDetector pScrollDetector,  final int pPointerID, final float pDistanceX, final float pDistanceY) {
 		
-		mTask.setX(this.getX() + pDistanceX);
-		mTask.setY(this.getY() + pDistanceY);
-	
+		mTask.setX(mTask.getX() + pDistanceX);
+		mTask.setY(mTask.getY() + pDistanceY);
+		setSpritePosition(mTask.getX(), mTask.getY());
 		
 	}
 	
@@ -206,6 +246,11 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 	public void onScrollStarted(ScrollDetector pScrollDetector,  final int pPointerID, final float pDistanceX, final float pDistanceY) {
 		
 				
+	}
+	
+	private void setSpritePosition(float x, float y) {
+		body.setTransform(new Vector2(x, y).mul(1 / PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT), 0);
+		Log.d(x+",","y");
 	}
 
 }
