@@ -14,6 +14,9 @@ import org.andengine.entity.scene.background.AutoParallaxBackground;
 import org.andengine.entity.scene.background.ParallaxBackground.ParallaxEntity;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.util.FPSLogger;
+import org.andengine.extension.physics.box2d.PhysicsConnector;
+import org.andengine.extension.physics.box2d.PhysicsFactory;
+import org.andengine.extension.physics.box2d.PhysicsWorld;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.input.touch.detector.ContinuousHoldDetector;
 import org.andengine.input.touch.detector.HoldDetector;
@@ -30,6 +33,7 @@ import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.andengine.opengl.texture.region.ITextureRegion;
+import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.ui.dialog.StringInputDialogBuilder;
 import org.andengine.util.adt.list.SmartList;
@@ -40,6 +44,7 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -48,6 +53,11 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.Toast;
+
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
+import com.badlogic.gdx.physics.box2d.FixtureDef;
 
 public class Visualtasks extends SimpleBaseGameActivity {
 	// ===========================================================
@@ -81,6 +91,9 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	// private Camera mCamera;
 	private TouchController mTouchController;
 	private ZoomCamera mZoomCamera;
+	private BitmapTextureAtlas mHUDTexture;
+	private TiledTextureRegion mToggleButtonTextureRegion;
+	protected PhysicsWorld mPhysicsWorld;
 
 
 	private HashMap<Task, TaskSprite> mTaskToSprite = new HashMap<Task, TaskSprite>();
@@ -166,6 +179,11 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		this.mAutoParallaxBackgroundTexture = new BitmapTextureAtlas(this.getTextureManager(), 2048, 2048, TextureOptions.DEFAULT);
 		this.mParallaxLayerFront = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mAutoParallaxBackgroundTexture, this, "Underwater.png", 0, 0);
 		mAutoParallaxBackgroundTexture.load();
+		
+		/**
+		this.mHUDTexture = new BitmapTextureAtlas(this.getTextureManager(), 300, 300,TextureOptions.BILINEAR);
+		this.mToggleButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mHUDTexture, this, "addButton.png", 0, 0, 2, 1); // 256x128
+		this.mHUDTexture.load();**/
 	}
 	
 	
@@ -183,13 +201,31 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		final AutoParallaxBackground autoParallaxBackground = new AutoParallaxBackground(0, 0, 0, 5);
 		autoParallaxBackground.attachParallaxEntity(new ParallaxEntity(-10.0f, new Sprite(0, CAMERA_HEIGHT - this.mParallaxLayerFront.getHeight(), this.mParallaxLayerFront, this.getVertexBufferObjectManager())));
 		this.mScene.attachChild(new Sprite(0, CAMERA_HEIGHT - this.mParallaxLayerFront.getHeight(), this.mParallaxLayerFront, this.getVertexBufferObjectManager()));
-		
 		//end bg stuff
-
 		
+		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0, 0), false);
+		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
 		
 		
 		//this.mScene.registerUpdateHandler(mHoldDetector);
+		
+		/**hudButton
+		final HUD hud = new HUD();
+		final TiledSprite toggleButton = new TiledSprite(0, CAMERA_HEIGHT / 2 - this.mToggleButtonTextureRegion.getHeight(), this.mToggleButtonTextureRegion, this.getVertexBufferObjectManager()) {
+			@Override
+			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+				if(pSceneTouchEvent.isActionDown()) {
+					showDialog(DIALOG_NEW_TASK_ID);
+				}
+				return true;
+			}
+		};
+		hud.registerTouchArea(toggleButton);
+		hud.attachChild(toggleButton);
+
+		this.mZoomCamera.setHUD(hud);
+		
+		//end hudButton**/
 		
 		return this.mScene;
 	}
@@ -328,9 +364,9 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	
 	private void addTask(String description, float pX, float pY){
 		Task task = new Task(0,description, pX, pY);
+		addTaskSpriteForTask(task);
 		this.mTaskList.add(task);
 		task.setSelected(true);
-		this.addTaskSpriteForTask(task);
 		this.reorderTasks();
 	}
 	
@@ -345,6 +381,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		
 		final TaskSprite taskSprite = new TaskSprite(this, pTask, mFont, mTaskTextureRegion, getVertexBufferObjectManager());
 		mTaskToSprite.put(pTask, taskSprite);
+		
 		Visualtasks.this.mScene.attachChild(taskSprite);
 		Visualtasks.this.mScene.registerTouchArea(taskSprite);
 			
