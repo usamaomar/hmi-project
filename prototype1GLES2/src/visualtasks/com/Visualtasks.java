@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 import org.andengine.engine.Engine;
 import org.andengine.engine.camera.ZoomCamera;
+import org.andengine.engine.camera.hud.HUD;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
@@ -13,9 +14,8 @@ import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.AutoParallaxBackground;
 import org.andengine.entity.scene.background.ParallaxBackground.ParallaxEntity;
 import org.andengine.entity.sprite.Sprite;
+import org.andengine.entity.sprite.TiledSprite;
 import org.andengine.entity.util.FPSLogger;
-import org.andengine.extension.physics.box2d.PhysicsConnector;
-import org.andengine.extension.physics.box2d.PhysicsFactory;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.input.touch.detector.ContinuousHoldDetector;
@@ -44,7 +44,6 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -55,9 +54,6 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
-import com.badlogic.gdx.physics.box2d.FixtureDef;
 
 public class Visualtasks extends SimpleBaseGameActivity {
 	// ===========================================================
@@ -180,10 +176,10 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		this.mParallaxLayerFront = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mAutoParallaxBackgroundTexture, this, "Underwater.png", 0, 0);
 		mAutoParallaxBackgroundTexture.load();
 		
-		/**
-		this.mHUDTexture = new BitmapTextureAtlas(this.getTextureManager(), 300, 300,TextureOptions.BILINEAR);
-		this.mToggleButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mHUDTexture, this, "addButton.png", 0, 0, 2, 1); // 256x128
-		this.mHUDTexture.load();**/
+		
+		this.mHUDTexture = new BitmapTextureAtlas(this.getTextureManager(), 150, 150,TextureOptions.BILINEAR);
+		this.mToggleButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mHUDTexture, this, "addButton.png", 0, 0, 1, 1);
+		this.mHUDTexture.load();
 	}
 	
 	
@@ -209,13 +205,46 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		
 		//this.mScene.registerUpdateHandler(mHoldDetector);
 		
-		/**hudButton
+		//hudButton
 		final HUD hud = new HUD();
-		final TiledSprite toggleButton = new TiledSprite(0, CAMERA_HEIGHT / 2 - this.mToggleButtonTextureRegion.getHeight(), this.mToggleButtonTextureRegion, this.getVertexBufferObjectManager()) {
+		/**final TiledSprite toggleButton = new TiledSprite(0, CAMERA_HEIGHT / 2 - this.mToggleButtonTextureRegion.getHeight(), this.mToggleButtonTextureRegion, this.getVertexBufferObjectManager()) {
 			@Override
 			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
 				if(pSceneTouchEvent.isActionDown()) {
-					showDialog(DIALOG_NEW_TASK_ID);
+					this.runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							showDialog(DIALOG_NEW_TASK_ID);
+						}
+			}
+		};**/
+		
+		final TiledSprite toggleButton = new TiledSprite(0, CAMERA_HEIGHT - this.mToggleButtonTextureRegion.getHeight(), this.mToggleButtonTextureRegion, this.getVertexBufferObjectManager()) {
+			@Override
+			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+				if(pSceneTouchEvent.isActionDown()) {
+					/**final boolean boundsEnabled = BoundCameraExample.this.mBoundChaseCamera.isBoundsEnabled();
+					if(boundsEnabled) {
+						BoundCameraExample.this.mBoundChaseCamera.setBoundsEnabled(false);
+						this.setCurrentTileIndex(1);
+						BoundCameraExample.**/
+						Visualtasks.this.runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								showDialog(DIALOG_NEW_TASK_ID);
+								//Toast.makeText(BoundCameraExample.this, "Bounds Disabled.", Toast.LENGTH_SHORT).show();
+							}
+						});
+					/**} else {
+						BoundCameraExample.this.mBoundChaseCamera.setBoundsEnabled(true);
+						this.setCurrentTileIndex(0);
+						BoundCameraExample.this.runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								Toast.makeText(BoundCameraExample.this, "Bounds Enabled.", Toast.LENGTH_SHORT).show();
+							}
+						});
+					}**/
 				}
 				return true;
 			}
@@ -268,7 +297,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		switch(id){
 		case DIALOG_NEW_TASK_ID:
 			final float pX = bundle != null && bundle.containsKey(KEY_TASK_X) ? bundle.getFloat(KEY_TASK_X) : (this.mZoomCamera.getXMax()-this.mZoomCamera.getXMin())/2f;
-			final float pY = bundle != null &&bundle.containsKey(KEY_TASK_Y) ? bundle.getFloat(KEY_TASK_Y) : (this.mZoomCamera.getYMax()-this.mZoomCamera.getYMin())/2f;
+			final float pY = bundle != null && bundle.containsKey(KEY_TASK_Y) ? bundle.getFloat(KEY_TASK_Y) : (this.mZoomCamera.getYMax()-this.mZoomCamera.getYMin())/2f;
 			
 			return new StringInputDialogBuilder(this,R.string.dialog_task_new_title,0, R.string.dialog_task_new_message, android.R.drawable.ic_dialog_info, "",
 				    new Callback<String>() {
