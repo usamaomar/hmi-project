@@ -39,8 +39,8 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 	private static final float SCALE_MAX = 5f;
 	private static final float SCALE_DEFAULT = 1f;
 	private static final float SCALE_MIN = 0.5f;
-	private static float VELOCITY;
-	private static int BORDER = 10;
+	private float VELOCITY;
+	private static int BORDER = 7;
 	private static final int TRIGGER_HOLD_MIN_MILISECONDS = 300;
 	private boolean isTouched; 
 	private Visualtasks mContext;
@@ -68,7 +68,7 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 		this.mPhysicsHandler.setVelocity(0, -VELOCITY);
 		**/
 		
-		// {dit gedeelte zorgt er voor dat body kleiner is dat sprite zodat wanneer je verkleint die body niet te groot is.
+		// {dit gedeelte zorgt er voor dat body kleiner is dan sprite zodat wanneer je verkleint die body niet te groot is.
 		try {
 			this.mTexture = new BitmapTexture(mContext.getTextureManager(), new IInputStreamOpener() {
 				@Override
@@ -93,7 +93,7 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 		faceBody = (Body) this.getUserData();
 		pContext.mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(this, body, true, true));
 		
-		VELOCITY = this.getScaleX()*this.getScaleX()*2;
+		VELOCITY = this.getScaleX()*this.getScaleX();
 		final Vector2 velocityv = Vector2Pool.obtain(0, -VELOCITY);
 		faceBody.setFixedRotation(true);
 		faceBody.setLinearVelocity(velocityv);
@@ -214,8 +214,8 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 	}
 	@Override
 	protected void onManagedUpdate(float pSecondsElapsed) {
-		VELOCITY = this.getScaleX()*this.getScaleX()*2;
-		Log.d("y = ",""+ body.getPosition().y);
+		VELOCITY = this.getScaleX()*this.getScaleX();
+		//Log.d("y = ",""+ body.getPosition().y);
 		
 		if(body.getPosition().y > BORDER) {
 			/**this.mPhysicsHandler.setVelocityY(0);

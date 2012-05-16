@@ -9,6 +9,7 @@ import org.andengine.engine.camera.hud.HUD;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
+import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.AutoParallaxBackground;
@@ -16,6 +17,7 @@ import org.andengine.entity.scene.background.ParallaxBackground.ParallaxEntity;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.sprite.TiledSprite;
 import org.andengine.entity.util.FPSLogger;
+import org.andengine.extension.physics.box2d.PhysicsFactory;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.input.touch.detector.ContinuousHoldDetector;
@@ -34,6 +36,7 @@ import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
+import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.ui.dialog.StringInputDialogBuilder;
 import org.andengine.util.adt.list.SmartList;
@@ -54,6 +57,8 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
+import com.badlogic.gdx.physics.box2d.FixtureDef;
 
 public class Visualtasks extends SimpleBaseGameActivity {
 	// ===========================================================
@@ -172,8 +177,8 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		this.mFont.load();
 		
 		//load background
-		this.mAutoParallaxBackgroundTexture = new BitmapTextureAtlas(this.getTextureManager(), 2048, 2048, TextureOptions.DEFAULT);
-		this.mParallaxLayerFront = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mAutoParallaxBackgroundTexture, this, "Underwater.png", 0, 0);
+		this.mAutoParallaxBackgroundTexture = new BitmapTextureAtlas(this.getTextureManager(), 2048, 1446, TextureOptions.DEFAULT);
+		this.mParallaxLayerFront = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mAutoParallaxBackgroundTexture, this, "bg3.png", 0, 0);
 		mAutoParallaxBackgroundTexture.load();
 		
 		
@@ -199,52 +204,44 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		this.mScene.attachChild(new Sprite(0, CAMERA_HEIGHT - this.mParallaxLayerFront.getHeight(), this.mParallaxLayerFront, this.getVertexBufferObjectManager()));
 		//end bg stuff
 		
-		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0, 0), false);
-		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
 		
+		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0, 0), false);
+		
+		final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
+		final Rectangle roof = new Rectangle(-0.5f*CAMERA_WIDTH, -0.5f*CAMERA_HEIGHT, CAMERA_WIDTH*2, 10, vertexBufferObjectManager);
+		final Rectangle ground = new Rectangle(-0.5f*CAMERA_WIDTH, 1.5f*CAMERA_HEIGHT - 10, CAMERA_WIDTH*2, 10, vertexBufferObjectManager);
+		final Rectangle left = new Rectangle(-0.5f*CAMERA_WIDTH, -0.5f*CAMERA_HEIGHT, 10, CAMERA_HEIGHT*2, vertexBufferObjectManager);
+		final Rectangle right = new Rectangle(CAMERA_WIDTH*1.5f - 10, -0.5f*CAMERA_HEIGHT, 10, CAMERA_HEIGHT*2, vertexBufferObjectManager);
+
+		final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 0.5f, 0.5f);
+		PhysicsFactory.createBoxBody(this.mPhysicsWorld, ground, BodyType.StaticBody, wallFixtureDef);
+		PhysicsFactory.createBoxBody(this.mPhysicsWorld, roof, BodyType.StaticBody, wallFixtureDef);
+		PhysicsFactory.createBoxBody(this.mPhysicsWorld, left, BodyType.StaticBody, wallFixtureDef);
+		PhysicsFactory.createBoxBody(this.mPhysicsWorld, right, BodyType.StaticBody, wallFixtureDef);
+
+		this.mScene.attachChild(ground);
+		this.mScene.attachChild(roof);
+		this.mScene.attachChild(left);
+		this.mScene.attachChild(right);
+		
+		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
+		//mZoomCamera.setZoomFactor(1.4f);
 		
 		//this.mScene.registerUpdateHandler(mHoldDetector);
 		
 		//hudButton
 		final HUD hud = new HUD();
-		/**final TiledSprite toggleButton = new TiledSprite(0, CAMERA_HEIGHT / 2 - this.mToggleButtonTextureRegion.getHeight(), this.mToggleButtonTextureRegion, this.getVertexBufferObjectManager()) {
-			@Override
-			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-				if(pSceneTouchEvent.isActionDown()) {
-					this.runOnUiThread(new Runnable() {
-						@Override
-						public void run() {
-							showDialog(DIALOG_NEW_TASK_ID);
-						}
-			}
-		};**/
 		
 		final TiledSprite toggleButton = new TiledSprite(0, CAMERA_HEIGHT - this.mToggleButtonTextureRegion.getHeight(), this.mToggleButtonTextureRegion, this.getVertexBufferObjectManager()) {
 			@Override
 			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
 				if(pSceneTouchEvent.isActionDown()) {
-					/**final boolean boundsEnabled = BoundCameraExample.this.mBoundChaseCamera.isBoundsEnabled();
-					if(boundsEnabled) {
-						BoundCameraExample.this.mBoundChaseCamera.setBoundsEnabled(false);
-						this.setCurrentTileIndex(1);
-						BoundCameraExample.**/
 						Visualtasks.this.runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
 								showDialog(DIALOG_NEW_TASK_ID);
-								//Toast.makeText(BoundCameraExample.this, "Bounds Disabled.", Toast.LENGTH_SHORT).show();
 							}
 						});
-					/**} else {
-						BoundCameraExample.this.mBoundChaseCamera.setBoundsEnabled(true);
-						this.setCurrentTileIndex(0);
-						BoundCameraExample.this.runOnUiThread(new Runnable() {
-							@Override
-							public void run() {
-								Toast.makeText(BoundCameraExample.this, "Bounds Enabled.", Toast.LENGTH_SHORT).show();
-							}
-						});
-					}**/
 				}
 				return true;
 			}
@@ -509,15 +506,16 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		private ContinuousHoldDetector mHoldDetector;
 		private float mPinchZoomStartedCameraZoomFactor;
 		private Scene mScene;
-		//private PinchZoomDetector mPinchZoomDetector;
+		private PinchZoomDetector mPinchZoomDetector;
 		private SurfaceScrollDetector mSurfaceScrollDetector;
+		private float zoomfac;
 		public TouchController(Scene pScene) {
 			this.mScene = pScene;
 			this.mHoldDetector = new ContinuousHoldDetector(this);
 			this.mHoldDetector.setTriggerHoldMinimumMilliseconds(TRIGGER_HOLD_MIN_MILISECONDS);
 			this.mScene.registerUpdateHandler(mHoldDetector);
 			this.mSurfaceScrollDetector = new SurfaceScrollDetector(this);
-			//this.mPinchZoomDetector = new PinchZoomDetector(this);
+			this.mPinchZoomDetector = new PinchZoomDetector(this);
 			this.mScene.setTouchAreaBindingOnActionDownEnabled(true);
 			this.mScene.setTouchAreaBindingOnActionMoveEnabled(false);
 			
@@ -547,12 +545,17 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		
 		@Override
 		public void onPinchZoom(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
-			mZoomCamera.setZoomFactor(mPinchZoomStartedCameraZoomFactor * pZoomFactor);
+			zoomfac = mPinchZoomStartedCameraZoomFactor * pZoomFactor ;
+			if(0.48 < zoomfac && zoomfac < 2.0){
+				mZoomCamera.setZoomFactor(zoomfac);
+			}
 		}
 
 		@Override
 		public void onPinchZoomFinished(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
-			mZoomCamera.setZoomFactor(mPinchZoomStartedCameraZoomFactor * pZoomFactor);
+			if(0.48 < zoomfac && zoomfac < 2.0){
+				mZoomCamera.setZoomFactor(zoomfac);
+			}
 		}
 
 		@Override
@@ -562,27 +565,27 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		
 		@Override
 		public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
-		//	if (this.mPinchZoomDetector != null) {
-		//		this.mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
+			if (this.mPinchZoomDetector != null) {
+				this.mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
 
-		//		if (this.mPinchZoomDetector.isZooming()) {
-//					this.mSurfaceScrollDetector.setEnabled(false);
-//					this.mHoldDetector.setEnabled(false);
-//
-			//	} else {
-//					if (pSceneTouchEvent.isActionDown()) {
-//
-//						this.mSurfaceScrollDetector.setEnabled(true);
-//						this.mHoldDetector.setEnabled(true);
-//					}
+				if (this.mPinchZoomDetector.isZooming()) {
+					this.mSurfaceScrollDetector.setEnabled(false);
+					this.mHoldDetector.setEnabled(false);
+
+				} else {
+					if (pSceneTouchEvent.isActionDown()) {
+
+						this.mSurfaceScrollDetector.setEnabled(true);
+						this.mHoldDetector.setEnabled(true);
+					}
 					this.mHoldDetector.onTouchEvent(pSceneTouchEvent);
-//					if(!mHoldDetector.isHolding())
-//						this.mSurfaceScrollDetector.onTouchEvent(pSceneTouchEvent);
+					if(!mHoldDetector.isHolding())
+						this.mSurfaceScrollDetector.onTouchEvent(pSceneTouchEvent);
 
-			//	}
-			//} else {
-			//	this.mSurfaceScrollDetector.onTouchEvent(pSceneTouchEvent);
-		//	}
+				}
+			} else {
+				this.mSurfaceScrollDetector.onTouchEvent(pSceneTouchEvent);
+			}
 
 			return true;
 		}
