@@ -39,17 +39,16 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 	private Visualtasks mContext;
 	private ContinuousHoldDetector mHoldDetector;
 	private final PhysicsHandler mPhysicsHandler;
-
+	private boolean isSelected;
 	private PinchZoomDetector mPinchZoomDetector;
 	private ScrollDetector mScrollDetector;
 	private float mStartScaleX, mStartScaleY;
-	private Task mTask;
 	private static final FixtureDef FIXTURE_DEF = PhysicsFactory.createFixtureDef(1, 0f, 0f);
 	private Body body;
 	
-	public TaskSprite(Visualtasks pContext, Task pTask, Font pFont,ITextureRegion pTextureRegion, VertexBufferObjectManager vBOM) {
-		super(pTask.getDescription(),pFont, pTextureRegion, vBOM);
-		this.mTask = pTask;
+	
+	public TaskSprite(String description, Visualtasks pContext, Font pFont,ITextureRegion pTextureRegion, VertexBufferObjectManager vBOM) {
+		super(description,pFont, pTextureRegion, vBOM);
 		this.mContext = pContext;
 		this.mPhysicsHandler = new PhysicsHandler(this);
 		this.registerUpdateHandler(this.mPhysicsHandler);
@@ -115,17 +114,17 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 			case TouchEvent.ACTION_DOWN:
 				this.mPhysicsHandler.setEnabled(false);
 			case TouchEvent.ACTION_MOVE:
-				if(this.mTask.isSelected() != true){
-					this.mTask.setSelected(true);
-					mContext.reorderTasks();
+				if(this.isSelected != true){
+					this.isSelected = true;
+//					mContext.reorderTasks();
 				}
 				
 				break;
 			case TouchEvent.ACTION_UP:
 			case TouchEvent.ACTION_CANCEL:
-				if(this.mTask.isSelected() != false){
-					this.mTask.setSelected(false);
-					mContext.reorderTasks();
+				if(this.isSelected != false){
+					this.isSelected = false;
+//					mContext.reorderTasks();
 				}
 				this.mPhysicsHandler.setEnabled(true);
 			}
@@ -160,7 +159,7 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 			float arg3) {
 		this.mHoldDetector.setEnabled(false);
 		final Bundle bundle = new Bundle();
-		bundle.putSerializable(Visualtasks.KEY_TASK, this.mTask);
+		bundle.putLong(Visualtasks.KEY_TASK_ID, 0);
 		this.mContext.runOnUiThread(new Runnable(){
 			@Override
 			public void run() {
@@ -187,10 +186,10 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 		//this.setPosition(mTask.getX(), mTask.getY());
 		//body.setTransform(new Vector2(200, 200), 0);
 		
-		this.setText(mTask.getDescription());
-		setSpritePosition(mTask.getX(), mTask.getY());
+//		this.setText(mTask.getDescription());
+//		setSpritePosition(mTask.getX(), mTask.getY());
 			if(!this.mPinchZoomDetector.isZooming()){
-				this.setScale(this.getScaleFromUrgency(mTask.getUrgency()));
+//				this.setScale(this.getScaleFromUrgency(mTask.getUrgency()));
 			}
 		
 		super.onManagedUpdate(pSecondsElapsed);
@@ -208,8 +207,8 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 		final float scaleX = Math.max(Math.min(this.getScaleX(), SCALE_MAX * SCALE_FACTOR),SCALE_MIN * SCALE_FACTOR);
 		
 		final float urgency = this.getUrgencyFromScale(scaleX);
-		this.mTask.setUrgency(urgency);
-		mContext.reorderTasks();
+//		this.mTask.setUrgency(urgency);
+//		mContext.reorderTasks();
 		
 	}
 	
@@ -225,18 +224,18 @@ public class TaskSprite extends TextSprite implements IClickDetectorListener,IPi
 	@Override
 	public void onScroll(ScrollDetector pScrollDetector,  final int pPointerID, final float pDistanceX, final float pDistanceY) {
 		
-		mTask.setX(mTask.getX() + pDistanceX);
-		mTask.setY(mTask.getY() + pDistanceY);
-		setSpritePosition(mTask.getX(), mTask.getY());
+//		mTask.setX(mTask.getX() + pDistanceX);
+//		mTask.setY(mTask.getY() + pDistanceY);
+//		setSpritePosition(mTask.getX(), mTask.getY());
 
 		
 	}
 	@Override
 	public void onScrollFinished(ScrollDetector pScrollDetector,  final int pPointerID, final float pDistanceX, final float pDistanceY) {
 		
-		mTask.setX(mTask.getX() + pDistanceX);
-		mTask.setY(mTask.getY() + pDistanceY);
-		setSpritePosition(mTask.getX(), mTask.getY());
+//		mTask.setX(mTask.getX() + pDistanceX);
+//		mTask.setY(mTask.getY() + pDistanceY);
+//		setSpritePosition(mTask.getX(), mTask.getY());
 		
 	}
 	
