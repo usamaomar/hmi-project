@@ -19,12 +19,20 @@ public final class R {
         public static final int complete=0x7f060002;
         public static final int delete=0x7f060001;
         public static final int edit_name=0x7f060000;
-        public static final int text=0x7f060003;
+        public static final int listview=0x7f060009;
+        public static final int tableRow1=0x7f060003;
+        public static final int text=0x7f060008;
+        public static final int textView1=0x7f060004;
+        public static final int textView2=0x7f060005;
+        public static final int textView3=0x7f060006;
+        public static final int textView4=0x7f060007;
     }
     public static final class layout {
         public static final int contextmenu=0x7f030000;
         public static final int main=0x7f030001;
-        public static final int test=0x7f030002;
+        public static final int tasks_list=0x7f030002;
+        public static final int tasks_row=0x7f030003;
+        public static final int test=0x7f030004;
     }
     public static final class menu {
         public static final int menu=0x7f050000;
@@ -39,5 +47,7 @@ public final class R {
         public static final int dialog_task_new_title=0x7f040002;
         public static final int edit=0x7f040006;
         public static final int hello=0x7f040000;
+        public static final int menu_listview=0x7f04000a;
+        public static final int no_tasks=0x7f040009;
     }
 }
