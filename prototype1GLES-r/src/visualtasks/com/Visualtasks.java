@@ -104,7 +104,8 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	private TaskSpriteController mTaskSpriteController;
 	private ZoomCamera mZoomCamera;
 	private BitmapTextureAtlas mHUDTexture;
-	private TiledTextureRegion mToggleButtonTextureRegion;
+	private TiledTextureRegion mAddButtonTextureRegion;
+	private TiledTextureRegion mDelButtonTextureRegion;
 	protected PhysicsWorld mPhysicsWorld;
 
 //	private HashMap<Long,Task> mTaskList;
@@ -182,7 +183,11 @@ public class Visualtasks extends SimpleBaseGameActivity {
 				
 				
 		this.mHUDTexture = new BitmapTextureAtlas(this.getTextureManager(), 150, 150,TextureOptions.BILINEAR);
-		this.mToggleButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mHUDTexture, this, "addButton.png", 0, 0, 1, 1);
+		this.mAddButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mHUDTexture, this, "addButton.png", 0, 0, 1, 1);
+		this.mHUDTexture.load();
+		
+		this.mHUDTexture = new BitmapTextureAtlas(this.getTextureManager(), 150, 150,TextureOptions.BILINEAR);
+		this.mDelButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mHUDTexture, this, "delFish.png", 0, 0, 1, 1);
 		this.mHUDTexture.load();
 	}
 	
@@ -230,7 +235,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		//hudButton
 				final HUD hud = new HUD();
 				
-				final TiledSprite toggleButton = new TiledSprite(0, CAMERA_HEIGHT - this.mToggleButtonTextureRegion.getHeight(), this.mToggleButtonTextureRegion, this.getVertexBufferObjectManager()) {
+				final TiledSprite addButton = new TiledSprite(this.mAddButtonTextureRegion.getWidth()/2 , CAMERA_HEIGHT - this.mAddButtonTextureRegion.getHeight(), this.mAddButtonTextureRegion, this.getVertexBufferObjectManager()) {
 					@Override
 					public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
 						if(pSceneTouchEvent.isActionDown()) {
@@ -244,8 +249,33 @@ public class Visualtasks extends SimpleBaseGameActivity {
 						return true;
 					}
 				};
-				hud.registerTouchArea(toggleButton);
-				hud.attachChild(toggleButton);
+				hud.registerTouchArea(addButton);
+				hud.attachChild(addButton);
+				
+				final TiledSprite delButton = new TiledSprite(this.mDelButtonTextureRegion.getWidth()*2, CAMERA_HEIGHT - this.mDelButtonTextureRegion.getHeight(), this.mDelButtonTextureRegion, this.getVertexBufferObjectManager()) {
+					@Override
+					public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+						if(pSceneTouchEvent.isActionUp()) {
+							this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
+							//check voor collision en verwijderen van bubble als dat het geval is.
+							/**for (int i = 0; i < /**db size**2; i++) {
+									Task task = mDbHandler.getTask((long) i);
+									//hier van task naar TaskSprite
+									
+									if(this.collidesWith(taskSprite)) {
+										Visualtasks.this.deleteTask(task);
+									}
+							}**/
+							
+							this.setPosition(mDelButtonTextureRegion.getWidth()*2, CAMERA_HEIGHT - mDelButtonTextureRegion.getHeight());
+						} else {
+							this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
+						}
+						return true;
+					}
+				};
+				hud.registerTouchArea(delButton);
+				hud.attachChild(delButton);
 				
 				mZoomCamera.setZoomFactor(1.5f);
 				this.mZoomCamera.setHUD(hud);
@@ -700,10 +730,15 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	 			final Vector2 velocityv = Vector2Pool.obtain(0, -VELOCITY);
 	 			body.setLinearVelocity(velocityv);
 	 			Vector2Pool.recycle(velocityv);
-	 		} else {
+	 		} else if (body.getPosition().y == BORDER){
 	 			final Vector2 velocityv = Vector2Pool.obtain(0, 0);
 	 			body.setLinearVelocity(velocityv);
 	 			Vector2Pool.recycle(velocityv);
+	 		} else {
+	 			//bubbble is in gebied van afgemaakte (complete) taken
+	 			tSprite.setAlpha(0.5f);
+	 			body.setActive(false);
+	 			mSpriteToTask.get(tSprite).setStatus(1);
 	 		}
 			
 		}
