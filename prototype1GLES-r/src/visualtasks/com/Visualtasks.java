@@ -238,13 +238,30 @@ public class Visualtasks extends SimpleBaseGameActivity {
 				final TiledSprite addButton = new TiledSprite(this.mAddButtonTextureRegion.getWidth()/2 , CAMERA_HEIGHT - this.mAddButtonTextureRegion.getHeight(), this.mAddButtonTextureRegion, this.getVertexBufferObjectManager()) {
 					@Override
 					public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-						if(pSceneTouchEvent.isActionDown()) {
+						/**if(pSceneTouchEvent.isActionDown()) {
 								Visualtasks.this.runOnUiThread(new Runnable() {
 									@Override
 									public void run() {
 										showDialog(DIALOG_NEW_TASK_ID);
 									}
 								});
+						}**/
+						if(pSceneTouchEvent.isActionUp()) {
+							this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
+							final Bundle bundle = new Bundle();
+							bundle.putFloat(KEY_TASK_X, pSceneTouchEvent.getX() - 150);
+							bundle.putFloat(KEY_TASK_Y, pSceneTouchEvent.getY() - 150);
+							runOnUiThread(new Runnable(){
+								@Override
+								public void run() {
+									Visualtasks.this.showDialog(DIALOG_NEW_TASK_ID, bundle);
+								}});
+							
+							
+							//terugzetten van knop
+							this.setPosition(mAddButtonTextureRegion.getWidth()/2 , CAMERA_HEIGHT - mAddButtonTextureRegion.getHeight());
+						} else {
+							this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
 						}
 						return true;
 					}
@@ -267,6 +284,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 									}
 							}**/
 							
+							//terugzetten van knop
 							this.setPosition(mDelButtonTextureRegion.getWidth()*2, CAMERA_HEIGHT - mDelButtonTextureRegion.getHeight());
 						} else {
 							this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
@@ -461,14 +479,14 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	
 
 	protected void onSceneHold(float pHoldX, float pHoldY){
-		final Bundle bundle = new Bundle();
+		/**final Bundle bundle = new Bundle();
 		bundle.putFloat(KEY_TASK_X, pHoldX);
 		bundle.putFloat(KEY_TASK_Y, pHoldY);
 		runOnUiThread(new Runnable(){
 			@Override
 			public void run() {
 				Visualtasks.this.showDialog(DIALOG_NEW_TASK_ID, bundle);
-			}});
+			}});**/
 	}
 	
 	
@@ -619,7 +637,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		private static final float SCALE_MAX = 5f;
 		private static final float SCALE_DEFAULT = 0.2f;
 		private static final float SCALE_MIN = 0.1f;
-		private static final int BORDER = 11;
+		private static final float BORDER = 6f;
 		private static final int TRIGGER_HOLD_MIN_MILISECONDS = 300;
 		private boolean isTouched; 
 		private ContinuousHoldDetector mHoldDetector;
@@ -723,20 +741,18 @@ public class Visualtasks extends SimpleBaseGameActivity {
 	    	 tSprite.setUserData(body);
 	    	 
 	    	 VELOCITY = tSprite.getScaleX()*tSprite.getScaleX();
-	 		 Log.d("y = ",""+ body.getPosition().y);
+	 		 Log.d("y = ",""+ body.getPosition().y + ","+VELOCITY);
 	    	 //faceBody = (Body) tSprite.getUserData();
 	 		
-	 		if(body.getPosition().y > BORDER) {
+	 		if(body.getPosition().y >= BORDER) {
 	 			final Vector2 velocityv = Vector2Pool.obtain(0, -VELOCITY);
 	 			body.setLinearVelocity(velocityv);
-	 			Vector2Pool.recycle(velocityv);
-	 		} else if (body.getPosition().y == BORDER){
-	 			final Vector2 velocityv = Vector2Pool.obtain(0, 0);
-	 			body.setLinearVelocity(velocityv);
+	 			tSprite.setAlpha(1f);
+	 			body.setActive(true);
 	 			Vector2Pool.recycle(velocityv);
 	 		} else {
-	 			//bubbble is in gebied van afgemaakte (complete) taken
-	 			tSprite.setAlpha(0.5f);
+	 			//bubble is in gebied van afgemaakte (complete) taken
+	 			tSprite.setAlpha(0.7f);
 	 			body.setActive(false);
 	 			mSpriteToTask.get(tSprite).setStatus(1);
 	 		}
@@ -779,6 +795,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 					break;
 				case TouchEvent.ACTION_CANCEL:
 				case TouchEvent.ACTION_UP:
+					updateBodyForSprite(mSelectedSprite);
 					mSelectedSprite = null;
 						
 				}
@@ -848,8 +865,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		}
 
 		@Override
-		public void onHoldStarted(HoldDetector arg0, int arg1, float arg2,
-				float arg3) {
+		public void onHoldStarted(HoldDetector arg0, int arg1, float arg2, float arg3) {
 			if (mSelectedSprite != null){
 				Task task = mSpriteToTask.get(mSelectedSprite);
 				
@@ -916,16 +932,7 @@ public class Visualtasks extends SimpleBaseGameActivity {
 		}
 		
 		
-		
-		
-		
-		
-		
 	}
-	
-	
-	
-	
 	
 
 }
