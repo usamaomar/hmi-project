@@ -24,7 +24,7 @@ public class TaskSprite extends Sprite {
 	private  Font mFont;
 	private Text mText;
 	
-	private static final float BORDER = 6f;
+	private static final float BORDER = 100f;
 	private final static float SCALE_FACTOR = 0.1f;
 	private static final float SCALE_MAX = 5f;
 	private static final float SCALE_DEFAULT = 0.2f;
