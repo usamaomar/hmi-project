@@ -6,15 +6,16 @@ import org.andengine.entity.text.AutoWrap;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.text.TextOptions;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
-import org.andengine.extension.physics.box2d.PhysicsConnectorManager;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
+import org.andengine.extension.physics.box2d.util.Vector2Pool;
 import org.andengine.extension.physics.box2d.util.constants.PhysicsConstants;
 import org.andengine.opengl.font.Font;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.util.HorizontalAlign;
 
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
@@ -169,9 +170,18 @@ public class TaskSprite extends Sprite {
 			break;
 		case STATUS_ACTIVE:
 			this.setAlpha(1f);
+			 final float velocity = this.getScaleX()*this.getScaleX();
+//	 		 Log.d("y = ",""+ body.getPosition().y + ","+velocity);
+	    	 //faceBody = (Body) tSprite.getUserData();
+	 		final Vector2 velocityv = Vector2Pool.obtain(0, -velocity);
+	 		body.setLinearVelocity(velocityv);
+	 		body.setActive(true);
+	 		Vector2Pool.recycle(velocityv);
 			break;
 		case STATUS_COMPLETED:
 			this.setAlpha(0.3f);
+			
+ 			body.setActive(false);
 			break;
 		}
 		
