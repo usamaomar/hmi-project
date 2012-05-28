@@ -15,6 +15,8 @@ import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.util.HorizontalAlign;
 
+import android.util.Log;
+
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
@@ -25,7 +27,7 @@ public class TaskSprite extends Sprite {
 	private  Font mFont;
 	private Text mText;
 	
-	private static final float BORDER = 100f;
+	private static final float BORDER = 160f;
 	private final static float SCALE_FACTOR = 0.1f;
 	private static final float SCALE_MAX = 5f;
 	private static final float SCALE_DEFAULT = 0.2f;
@@ -42,6 +44,8 @@ public class TaskSprite extends Sprite {
 	private Scene mScene;
 	private VertexBufferObjectManager mVBO;
 	private float velocity; 
+	private int tStatus = -1;
+	
 	public TaskSprite(long id, Scene pScene, FixtureDef fixtureDef, PhysicsWorld physicsWorld, Font pFont, ITextureRegion pTextureRegion,	VertexBufferObjectManager vBOM) {
 		super(120,120,pTextureRegion, vBOM);
 		mVBO =  vBOM;
@@ -51,6 +55,7 @@ public class TaskSprite extends Sprite {
 		this.mScene = pScene;
 		this.mFont = pFont;
 		createBody();
+		velocity = this.getScaleX()*this.getScaleX();
 //		mScene.registerUpdateHandler(this);
 		
 		
@@ -162,9 +167,13 @@ public class TaskSprite extends Sprite {
 	}
 	
 	public int getStatus(){
-		if (deleted) return STATUS_DELETED;
-		else if (this.getY() > BORDER) return STATUS_ACTIVE;
-		else return STATUS_COMPLETED;
+		int status = 2;
+		
+		if (deleted) status = STATUS_DELETED;
+		else if (this.getY() > BORDER) status = STATUS_ACTIVE;
+		else if (this.getY() < BORDER) status = STATUS_COMPLETED;
+		
+		return status;
 	}
 	
 	
@@ -184,16 +193,22 @@ public class TaskSprite extends Sprite {
 		case STATUS_ACTIVE:
 			if(this.getAlpha() != 1f)
 				this.setAlpha(1f);
+
 			if(this.isSelected()){
 				body.setLinearVelocity(0, 0);
+				body.setActive(true);
+				if(this.getY() - this.getHeight()/2 < 161) {
+					body.setActive(false);
+				}
 			}
 			else{
-						final Vector2 velocityv = Vector2Pool.obtain(0, -velocity);
+					final Vector2 velocityv = Vector2Pool.obtain(0, -velocity);
 			 		body.setLinearVelocity(velocityv);
 			 		body.setActive(true);
 			 		Vector2Pool.recycle(velocityv);
 				
 			}
+			
 			break;
 		case STATUS_COMPLETED:
 			this.setAlpha(0.3f);
