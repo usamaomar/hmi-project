@@ -224,17 +224,22 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, 2, vertexBufferObjectManager);
 		final Rectangle left = new Rectangle(0, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
 		final Rectangle right = new Rectangle(CAMERA_WIDTH - 2, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
+		final Rectangle border = new Rectangle(0, 160, CAMERA_WIDTH, 1, vertexBufferObjectManager);
 
 		final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 0.5f, 0.5f);
 		PhysicsFactory.createBoxBody(this.mPhysicsWorld, ground, BodyType.StaticBody, wallFixtureDef);
 		PhysicsFactory.createBoxBody(this.mPhysicsWorld, roof, BodyType.StaticBody, wallFixtureDef);
 		PhysicsFactory.createBoxBody(this.mPhysicsWorld, left, BodyType.StaticBody, wallFixtureDef);
 		PhysicsFactory.createBoxBody(this.mPhysicsWorld, right, BodyType.StaticBody, wallFixtureDef);
+		PhysicsFactory.createBoxBody(this.mPhysicsWorld, border, BodyType.StaticBody, wallFixtureDef);
 
+		border.setVisible(false);
+		
 		this.mScene.attachChild(ground);
 		this.mScene.attachChild(roof);
 		this.mScene.attachChild(left);
 		this.mScene.attachChild(right);
+		this.mScene.attachChild(border);
 		
 		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
 		
@@ -558,6 +563,8 @@ protected void addTask(String description, float pX, float pY) {
 		private Scene mScene;
 		private PinchZoomDetector mPinchZoomDetector;
 		private SurfaceScrollDetector mSurfaceScrollDetector;
+		private float zoomfac;
+		
 		public TouchController(Scene pScene) {
 			this.mScene = pScene;
 			this.mHoldDetector = new ContinuousHoldDetector(this);
@@ -594,12 +601,19 @@ protected void addTask(String description, float pX, float pY) {
 		
 		@Override
 		public void onPinchZoom(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
-			mZoomCamera.setZoomFactor(mPinchZoomStartedCameraZoomFactor * pZoomFactor);
+			//mZoomCamera.setZoomFactor(mPinchZoomStartedCameraZoomFactor * pZoomFactor);
+			zoomfac = mPinchZoomStartedCameraZoomFactor * pZoomFactor ;
+			if(1.0 < zoomfac && zoomfac < 2.0){
+				mZoomCamera.setZoomFactor(zoomfac);
+			}
 		}
 
 		@Override
 		public void onPinchZoomFinished(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
-			mZoomCamera.setZoomFactor(mPinchZoomStartedCameraZoomFactor * pZoomFactor);
+			//mZoomCamera.setZoomFactor(mPinchZoomStartedCameraZoomFactor * pZoomFactor);
+			if(1.0 < zoomfac && zoomfac < 2.0){
+				mZoomCamera.setZoomFactor(zoomfac);
+			}
 		}
 
 		@Override
