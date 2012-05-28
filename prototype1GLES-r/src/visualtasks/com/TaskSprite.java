@@ -36,10 +36,12 @@ public class TaskSprite extends Sprite {
 	 private PhysicsConnector pc;
 	private boolean deleted = false;
 	private boolean bodyNeedsUpdate = false;
+	private boolean selected = false;
 	private long id;
 	private Body body;
 	private Scene mScene;
 	private VertexBufferObjectManager mVBO;
+	private float velocity; 
 	public TaskSprite(long id, Scene pScene, FixtureDef fixtureDef, PhysicsWorld physicsWorld, Font pFont, ITextureRegion pTextureRegion,	VertexBufferObjectManager vBOM) {
 		super(120,120,pTextureRegion, vBOM);
 		mVBO =  vBOM;
@@ -58,10 +60,18 @@ public class TaskSprite extends Sprite {
 	public static final int STATUS_COMPLETED = STATUS_ACTIVE + 1;
 	public static final int STATUS_DELETED = STATUS_COMPLETED + 1;
 	
-	public void delete(){
+	public void setDeleted(){
 		deleted = true;
 	}
 	
+	
+	public void setSelected(boolean selected) {
+		this.selected = selected;
+	}
+	
+	public boolean isSelected() {
+		return selected;
+	}
 	@Override
 	public void setX(float pX) {
 		
@@ -157,26 +167,33 @@ public class TaskSprite extends Sprite {
 		else return STATUS_COMPLETED;
 	}
 	
+	
+	
 	@Override
 	protected void onManagedUpdate(float pSecondsElapsed) {
 		if (bodyNeedsUpdate){
 			this.removeBody();
 			this.createBody();
+			velocity = this.getScaleX()*this.getScaleX();
 			bodyNeedsUpdate = false;
 		}
 		switch(this.getStatus()){
 		case STATUS_DELETED:
-			
+			this.removeBody();
 			break;
 		case STATUS_ACTIVE:
-			this.setAlpha(1f);
-			 final float velocity = this.getScaleX()*this.getScaleX();
-//	 		 Log.d("y = ",""+ body.getPosition().y + ","+velocity);
-	    	 //faceBody = (Body) tSprite.getUserData();
-	 		final Vector2 velocityv = Vector2Pool.obtain(0, -velocity);
-	 		body.setLinearVelocity(velocityv);
-	 		body.setActive(true);
-	 		Vector2Pool.recycle(velocityv);
+			if(this.getAlpha() != 1f)
+				this.setAlpha(1f);
+			if(this.isSelected()){
+				body.setLinearVelocity(0, 0);
+			}
+			else{
+						final Vector2 velocityv = Vector2Pool.obtain(0, -velocity);
+			 		body.setLinearVelocity(velocityv);
+			 		body.setActive(true);
+			 		Vector2Pool.recycle(velocityv);
+				
+			}
 			break;
 		case STATUS_COMPLETED:
 			this.setAlpha(0.3f);

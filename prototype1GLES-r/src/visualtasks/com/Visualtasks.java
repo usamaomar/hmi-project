@@ -528,8 +528,23 @@ protected void addTask(String description, float pX, float pY) {
 		
 	}
 	
-	private void deleteTask(TaskSprite task){
-		task.delete();
+	private void deleteTask(final TaskSprite task){
+		task.setDeleted();
+		long id = task.getId();
+		if(mIdToSprite.containsKey(id)){
+			mIdToSprite.remove(id);
+			mDbHandler.deleteTask(id);
+			runOnUpdateThread(new Runnable() {
+				
+				@Override
+				public void run() {
+					mScene.unregisterTouchArea(task);
+					mScene.detachChild(task);
+					
+				}
+			});
+			
+		}
 	}
 	
 	
@@ -656,10 +671,10 @@ protected void addTask(String description, float pX, float pY) {
 		
 
 		private static final int TRIGGER_HOLD_MIN_MILISECONDS = 300;
-		private boolean isTouched; 
+		 
 		private ContinuousHoldDetector mHoldDetector;
 		
-		private boolean isSelected;
+		
 		private PinchZoomDetector mPinchZoomDetector;
 		private ScrollDetector mScrollDetector;
 		private float mStartScaleX, mStartScaleY;
@@ -668,8 +683,6 @@ protected void addTask(String description, float pX, float pY) {
 		private Scene mScene;
 		private TaskSprite mSelectedSprite;
 				
-		//private Body faceBody;
-		private float VELOCITY;
 		
 		public TaskSpritesTouchListener(Scene scene) {
 			mScene = scene;
@@ -691,35 +704,6 @@ protected void addTask(String description, float pX, float pY) {
 			
 		}
 		
-//		private void createBodyForSprite(TextSprite tSprite){
-//			PhysicsConnectorManager pcm = Visualtasks.this.mPhysicsWorld.getPhysicsConnectorManager();
-//			 Body body = pcm.findBodyByShape(tSprite);
-//			 
-//			 //physics
-//	    	
-//	    	 	    	 
-//	    	 // save body in sprite to get acces to it
-//	    	 tSprite.setUserData(body);
-//	    	 
-//	    	 final float velocity = tSprite.getScaleX()*tSprite.getScaleX();
-//	 		 Log.d("y = ",""+ body.getPosition().y + ","+velocity);
-	    	 //faceBody = (Body) tSprite.getUserData();
-//	 		if(body.getPosition().y >= BORDER) {
-//	 			final Vector2 velocityv = Vector2Pool.obtain(0, -velocity);
-//	 			body.setLinearVelocity(velocityv);
-//	 			tSprite.setAlpha(1f);
-//	 			body.setActive(true);
-//	 			Vector2Pool.recycle(velocityv);
-//	 		} else {
-//	 			//bubble is in gebied van afgemaakte (complete) taken
-//	 			tSprite.setAlpha(0.7f);
-//	 			body.setActive(false);
-//	 			mSpriteToTask.get(tSprite).setStatus(1);
-//	 		}
-	 		
-			
-//		}
-		
 		
 		
 		
@@ -732,6 +716,7 @@ protected void addTask(String description, float pX, float pY) {
 				switch(pAreaTouchEvent.getAction()){
 				case TouchEvent.ACTION_DOWN:
 					mSelectedSprite = ts;
+					mSelectedSprite.setSelected(true);
 				case TouchEvent.ACTION_OUTSIDE:
 					
 				
@@ -740,8 +725,11 @@ protected void addTask(String description, float pX, float pY) {
 					break;
 				case TouchEvent.ACTION_CANCEL:
 				case TouchEvent.ACTION_UP:
-//					updateBodyForSprite(mSelectedSprite);
-					mSelectedSprite = null;
+					if (mSelectedSprite != null){
+						mSelectedSprite.setSelected(false);
+						mSelectedSprite = null;
+						
+					}
 						
 				}
 				this.mPinchZoomDetector.onTouchEvent(pAreaTouchEvent);
@@ -755,13 +743,14 @@ protected void addTask(String description, float pX, float pY) {
 
 		@Override
 		public void onScroll(ScrollDetector pScrollDetector,  final int pPointerID, final float pDistanceX, final float pDistanceY) {
-			if (mSelectedSprite != null){	
+			final TaskSprite tSprite = mSelectedSprite;
+			if (tSprite != null){	
 				runOnUpdateThread(new Runnable() {
 					
 					@Override
 					public void run() {
-						mSelectedSprite.setX(mSelectedSprite.getX() + pDistanceX);
-						mSelectedSprite.setY(mSelectedSprite.getY() + pDistanceY);
+						tSprite.setX(tSprite.getX() + pDistanceX);
+						tSprite.setY(tSprite.getY() + pDistanceY);
 					}
 				});
 			}
@@ -769,13 +758,14 @@ protected void addTask(String description, float pX, float pY) {
 
 		@Override
 		public void onScrollFinished(ScrollDetector pScrollDetector,  final int pPointerID, final float pDistanceX, final float pDistanceY) {
-			if (mSelectedSprite != null){
+			final TaskSprite tSprite = mSelectedSprite;
+			if (tSprite != null){
 				runOnUpdateThread(new Runnable() {
 					
 					@Override
 					public void run() {
-						mSelectedSprite.setX(mSelectedSprite.getX() + pDistanceX);
-						mSelectedSprite.setY(mSelectedSprite.getY() + pDistanceY);
+						tSprite.setX(tSprite.getX() + pDistanceX);
+						tSprite.setY(tSprite.getY() + pDistanceY);
 						
 					}
 				});
