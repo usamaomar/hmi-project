@@ -29,8 +29,8 @@ public class TaskSprite extends Sprite {
 	
 
 	private final static float SCALE_FACTOR = 0.1f;
-	private static final float SCALE_MAX = 5f;
-	private static final float SCALE_DEFAULT = 0.2f;
+	private static final float SCALE_MAX = 1f;
+	private static final float SCALE_DEFAULT = 0.5f;
 	private static final float SCALE_MIN = 0.1f;
 	
 	private PhysicsWorld mPhysicsWorld;
@@ -43,8 +43,7 @@ public class TaskSprite extends Sprite {
 	private Body body;
 	private Scene mScene;
 	private VertexBufferObjectManager mVBO;
-	private float velocity; 
-	private int tStatus = -1;
+	private float velocity;
 	
 	public TaskSprite(long id, Scene pScene, FixtureDef fixtureDef, PhysicsWorld physicsWorld, Font pFont, ITextureRegion pTextureRegion,	VertexBufferObjectManager vBOM) {
 		super(120,120,pTextureRegion, vBOM);
@@ -55,7 +54,8 @@ public class TaskSprite extends Sprite {
 		this.mScene = pScene;
 		this.mFont = pFont;
 		createBody();
-		velocity = this.getScaleX()*this.getScaleX();
+		velocity = this.getScaleX()*this.getScaleX()*0.5f;
+		setScale(SCALE_DEFAULT);
 //		mScene.registerUpdateHandler(this);
 		
 		
@@ -196,7 +196,7 @@ public class TaskSprite extends Sprite {
 			if(this.isSelected()){
 				body.setLinearVelocity(0, 0);
 				body.setActive(true);
-				if(this.getY() - this.getHeight()/2 < Visualtasks.BORDER+1) {
+				if(this.getY() - this.getHeight()/2 < Visualtasks.BORDER+3) {
 					body.setActive(false);
 				}
 			}
@@ -221,8 +221,6 @@ public class TaskSprite extends Sprite {
 			break;
 		case STATUS_COMPLETED:
 			this.setAlpha(0.3f);
-			
- 			
 			break;
 		}
 		//check if new body needed
