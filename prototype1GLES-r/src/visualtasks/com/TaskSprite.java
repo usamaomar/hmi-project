@@ -192,9 +192,7 @@ public class TaskSprite extends Sprite {
 			this.removeBody();
 			break;
 		case STATUS_ACTIVE:
-			if(this.getAlpha() != 1f)
-				this.setAlpha(1f);
-
+		case STATUS_COMPLETED:
 			if(this.isSelected()){
 				body.setLinearVelocity(0, 0);
 				body.setActive(true);
@@ -211,13 +209,24 @@ public class TaskSprite extends Sprite {
 			}
 			
 			break;
+		}
+		
+		
+		//set alpha
+		switch(this.getStatus()){
+		case STATUS_DELETED:
+			break;
+		case STATUS_ACTIVE:
+			if(this.getAlpha() != 1f)
+				this.setAlpha(1f);
+
+			break;
 		case STATUS_COMPLETED:
 			this.setAlpha(0.3f);
 			
- 			body.setActive(false);
+ 			
 			break;
 		}
-		
 		//check if new body needed
 		super.onManagedUpdate(pSecondsElapsed);
 	}

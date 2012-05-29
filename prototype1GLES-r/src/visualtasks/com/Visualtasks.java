@@ -9,14 +9,12 @@ import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.engine.camera.hud.HUD;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
-import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
+import org.andengine.engine.options.resolutionpolicy.FillResolutionPolicy;
 import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.scene.IOnAreaTouchListener;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.ITouchArea;
 import org.andengine.entity.scene.Scene;
-import org.andengine.entity.scene.background.ParallaxBackground;
-import org.andengine.entity.scene.background.ParallaxBackground.ParallaxEntity;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
@@ -143,13 +141,13 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	@Override
 	public EngineOptions onCreateEngineOptions() {
 		final DisplayMetrics metrics = this.getResources().getDisplayMetrics();
-		this.mZoomCamera = new ZoomCamera(0, START_HEIGHT, metrics.widthPixels, metrics.heightPixels);
+		this.mZoomCamera = new ZoomCamera(0, START_HEIGHT, metrics.widthPixels / metrics.density, metrics.heightPixels/ metrics.density);
 		this.mZoomCamera.setBounds(0, 0, metrics.widthPixels, BACKGROUND_HEIGHT);
 		this.mZoomCamera.setBoundsEnabled(true);
 		this.mZoomCamera.setZoomFactor(CAMERA_ZOOM_FACTOR);
 			
 		final EngineOptions engineOptions = new EngineOptions(true,ScreenOrientation.LANDSCAPE_FIXED, 
-				new RatioResolutionPolicy(metrics.widthPixels,metrics.heightPixels), this.mZoomCamera);
+				new FillResolutionPolicy(), this.mZoomCamera);
 		engineOptions.getTouchOptions().setNeedsMultiTouch(true);
 		
 		return engineOptions;
@@ -196,6 +194,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			
 		}
 
 				
@@ -216,10 +215,13 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		this.mScene.setOnAreaTouchTraversalFrontToBack();
 		
 		//bg stuff
-		final ParallaxBackground parallaxBackground = new ParallaxBackground(0, 0, 0);
-		parallaxBackground.attachParallaxEntity(new ParallaxEntity(0, new Sprite(0, 0, this.mBackgroundTextureRegion, this.getVertexBufferObjectManager())));
+//		final ParallaxBackground parallaxBackground = new ParallaxBackground(0, 0, 0);
+//		parallaxBackground.attachParallaxEntity(new ParallaxEntity(0, new Sprite(0, 0, this.mBackgroundTextureRegion, this.getVertexBufferObjectManager())));
 //		this.mScene.setBackground(parallaxBackground);
-		this.mScene.attachChild(new Sprite(0,0, this.mBackgroundTextureRegion, this.getVertexBufferObjectManager()));
+		Sprite backgroundSprite = new Sprite(0,0, this.mBackgroundTextureRegion, this.getVertexBufferObjectManager());
+		backgroundSprite.setWidth(this.getResources().getDisplayMetrics().widthPixels);
+		backgroundSprite.setHeight(BACKGROUND_HEIGHT);
+		this.mScene.attachChild(backgroundSprite);
 		
 		//end bg stuff
 		
