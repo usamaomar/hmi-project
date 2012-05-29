@@ -27,7 +27,7 @@ public class TaskSprite extends Sprite {
 	private  Font mFont;
 	private Text mText;
 	
-	private static final float BORDER = 160f;
+
 	private final static float SCALE_FACTOR = 0.1f;
 	private static final float SCALE_MAX = 5f;
 	private static final float SCALE_DEFAULT = 0.2f;
@@ -171,8 +171,8 @@ public class TaskSprite extends Sprite {
 		int status = 2;
 		
 		if (deleted) status = STATUS_DELETED;
-		else if (this.getY() > BORDER) status = STATUS_ACTIVE;
-		else if (this.getY() < BORDER) status = STATUS_COMPLETED;
+		else if (this.getY() > Visualtasks.BORDER) status = STATUS_ACTIVE;
+		else if (this.getY() < Visualtasks.BORDER) status = STATUS_COMPLETED;
 		
 		return status;
 	}
@@ -198,7 +198,7 @@ public class TaskSprite extends Sprite {
 			if(this.isSelected()){
 				body.setLinearVelocity(0, 0);
 				body.setActive(true);
-				if(this.getY() - this.getHeight()/2 < 161) {
+				if(this.getY() - this.getHeight()/2 < Visualtasks.BORDER+1) {
 					body.setActive(false);
 				}
 			}
