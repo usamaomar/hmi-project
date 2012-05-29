@@ -74,6 +74,8 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	private static final float CAMERA_ZOOM_FACTOR = 1f;
 	private static final int BACKGROUND_HEIGHT = 2400;
 	public static final float BORDER = 1000f;
+	public static final float START_HEIGHT = 800;
+	
 	public static final int DIALOG_NEW_TASK_ID = 0;
 	public static final int DIALOG_EDIT_TASK_ID = DIALOG_NEW_TASK_ID + 1;
 	public static final int DIALOG_CONTEXT_ID = DIALOG_EDIT_TASK_ID + 1;
@@ -141,7 +143,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	@Override
 	public EngineOptions onCreateEngineOptions() {
 		final DisplayMetrics metrics = this.getResources().getDisplayMetrics();
-		this.mZoomCamera = new ZoomCamera(0, 0, metrics.widthPixels, metrics.heightPixels);
+		this.mZoomCamera = new ZoomCamera(0, START_HEIGHT, metrics.widthPixels, metrics.heightPixels);
 		this.mZoomCamera.setBounds(0, 0, metrics.widthPixels, BACKGROUND_HEIGHT);
 		this.mZoomCamera.setBoundsEnabled(true);
 		this.mZoomCamera.setZoomFactor(CAMERA_ZOOM_FACTOR);
@@ -264,9 +266,11 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 				}**/
 				if(pSceneTouchEvent.isActionUp()) {
 					this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
+					final float[] coord = mZoomCamera.getSceneCoordinatesFromCameraSceneCoordinates(this.getSceneCenterCoordinates());
 					final Bundle bundle = new Bundle();
-					bundle.putFloat(KEY_TASK_X, pSceneTouchEvent.getX() - 150);
-					bundle.putFloat(KEY_TASK_Y, pSceneTouchEvent.getY() - 150);
+					
+					bundle.putFloat(KEY_TASK_X, coord[0]);
+					bundle.putFloat(KEY_TASK_Y, coord[1]);
 					runOnUiThread(new Runnable(){
 						@Override
 						public void run() {
