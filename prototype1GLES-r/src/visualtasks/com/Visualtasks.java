@@ -532,17 +532,20 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	}
 	
 	
-			
+	/**
+	 * Touch Controller for the scene.
+	 * Only scroll is needed for the version with buttons
+	 * Double tap/Hold is also needed for the version without buttons
+	 */
 		
-	class TouchController implements IOnSceneTouchListener,IScrollDetectorListener, IPinchZoomDetectorListener, IHoldDetectorListener{
+	class TouchController implements IOnSceneTouchListener,IScrollDetectorListener/**, IPinchZoomDetectorListener, IHoldDetectorListener**/{
 
 		private int lastTouchId;
-		private ContinuousHoldDetector mHoldDetector;
-		private float mPinchZoomStartedCameraZoomFactor;
+//		private ContinuousHoldDetector mHoldDetector;
+//		private float mPinchZoomStartedCameraZoomFactor;
 		private Scene mScene;
 //		private PinchZoomDetector mPinchZoomDetector;
 		private SurfaceScrollDetector mSurfaceScrollDetector;
-		private float zoomfac;
 		
 		public TouchController(Scene pScene) {
 			this.mScene = pScene;
@@ -558,7 +561,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 			//this.mPinchZoomDetector.setEnabled(false);
 		}
 		
-		@Override
+		/**@Override
 		public void onHold(HoldDetector pHoldDetector, long pHoldTimeMilliseconds, int pPointerID, float pHoldX, float pHoldY) {
 			
 		}
@@ -568,7 +571,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 			//verplaatst naar onHoldStarted(), vond ik logischer
 			/**pHoldDetector.setEnabled(false);
 			showPopUp(pHoldX, pHoldY);
-			pHoldDetector.setEnabled(true);**/
+			pHoldDetector.setEnabled(true);
 		}
 
 		@Override
@@ -598,7 +601,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		@Override
 		public void onPinchZoomStarted(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent) {
 			mPinchZoomStartedCameraZoomFactor = mZoomCamera.getZoomFactor();
-		}
+		}**/
 		
 		@Override
 		public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
@@ -659,6 +662,12 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		}
 		
 	}
+	
+	/**
+	 * Touch controller for a bubble sprite
+	 * Pinch-to-zoom/resize, scroll and double tap/hold is needed
+	 *
+	 */
 	
 	class TaskSpritesTouchListener implements IOnAreaTouchListener,IPinchZoomDetectorListener, IHoldDetectorListener, IScrollDetectorListener{
 		
