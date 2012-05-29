@@ -66,6 +66,7 @@ public class TaskSprite extends Sprite {
 	public static final int STATUS_DELETED = STATUS_COMPLETED + 1;
 	
 	public void setDeleted(){
+		this.removeBody();
 		deleted = true;
 	}
 	
