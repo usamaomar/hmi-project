@@ -2,6 +2,7 @@ package visualtasks.com;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 import org.andengine.engine.camera.ZoomCamera;
@@ -41,6 +42,7 @@ import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.ui.dialog.StringInputDialogBuilder;
+import org.andengine.util.adt.list.SmartList;
 import org.andengine.util.call.Callback;
 
 import android.app.Dialog;
@@ -282,20 +284,23 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		hud.attachChild(addButton);
 		
 		final TiledSprite delButton = new TiledSprite(this.mDelButtonTextureRegion.getWidth()*2, CAMERA_HEIGHT - this.mDelButtonTextureRegion.getHeight(), this.mDelButtonTextureRegion, this.getVertexBufferObjectManager()) {
+			
 			@Override
 			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
 				if(pSceneTouchEvent.isActionUp()) {
-					this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
+					final float x = pSceneTouchEvent.getX() - this.getWidth() / 2;
+					final float y = pSceneTouchEvent.getY() - this.getHeight() / 2;
+					
+					this.setPosition(x,y );
 					
 					//check voor collision en verwijderen van bubble als dat het geval is.
-					/**for (int i = 0; i < /**db size**2; i++) {
-							Task task = mDbHandler.getTask((long) i);
-							//hier van task naar TaskSprite
+					
+					TaskSprite spriteToDelete = Visualtasks.this.getTaskSpriteAtPosition(mZoomCamera.getSceneCoordinatesFromCameraSceneCoordinates(
+							this.getSceneCenterCoordinates()));
 							
-							if(this.collidesWith(taskSprite)) {
-								Visualtasks.this.deleteTask(task);
-							}
-					}**/
+					if (spriteToDelete != null){
+						Visualtasks.this.deleteTask(spriteToDelete);
+					}
 					
 					//terugzetten van knop
 					this.setPosition(mDelButtonTextureRegion.getWidth()*2, CAMERA_HEIGHT - mDelButtonTextureRegion.getHeight());
@@ -317,15 +322,15 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	}
 	
 	
+	private TaskSprite getTaskSpriteAtPosition(float[] position){
+		for(TaskSprite tSprite: mIdToSprite.values()){
+			if(tSprite.contains(position[0], position[1])){
+				return tSprite;
+			}
+		}
+		return null;
+	}
 	
-//	public synchronized void setSelectedTask(Task task){
-//		if (this.mSelectedTask != null){
-//			this.mSelectedTask.setSelected(false);
-//		}
-//		this.mSelectedTask = task;
-//		this.mSelectedTask.setSelected(true);
-//	}
-
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
@@ -458,48 +463,13 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	
 
 	
-protected void addTask(String description, float pX, float pY) {
+	protected void addTask(String description, float pX, float pY) {
 		Long id = mDbHandler.addTask(description, pX, pY, TaskSprite.STATUS_ACTIVE, 0f);
 		this.addTask(id, description, pX, pY);
 		
 	}
 
 
-//	public void reorderTasks(){
-//		runOnUpdateThread(new Runnable(){
-//
-//			@Override
-//			public void run() {
-//				synchronized(mTaskList){
-//					Collections.sort(mTaskList, new Task.UrgencyComparator());
-//					
-//					final float minUrgency = mTaskList.isEmpty()? 0 :mTaskList.get(0).getUrgency();
-//					final float maxUrgency = mTaskList.isEmpty()? 0 :mTaskList.get(mTaskList.size()-1).getUrgency();
-//					float urgencyOffset = 0; //minUrgency > 0 ? minUrgency : maxUrgency < 0 ? maxUrgency : 0 ;
-//					
-//					
-//					Collections.sort(mTaskList, new Task.DefaultComparator());
-//					
-//					
-//					for (int i = mTaskList.size()-1;i>=0;i--){
-//						final Task task = mTaskList.get(i);
-//						task.setUrgency(task.getUrgency() - urgencyOffset);
-//						if(mTaskToSprite.containsKey(task)){
-//							final TaskSprite taskSprite = Visualtasks.this.mTaskToSprite.get(task);
-//						
-//							Visualtasks.this.mScene.detachChild(taskSprite);
-//							Visualtasks.this.mScene.unregisterTouchArea(taskSprite);
-//							Visualtasks.this.mScene.attachChild(taskSprite);
-//							Visualtasks.this.mScene.registerTouchArea(taskSprite);
-//						}
-//					}
-//				}
-//				
-//			}});
-//		
-			
-//	}
-	
 
 	protected void onSceneHold(float pHoldX, float pHoldY){
 		/**final Bundle bundle = new Bundle();
