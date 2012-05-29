@@ -1,8 +1,8 @@
 package visualtasks.com;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 
 import org.andengine.engine.camera.ZoomCamera;
@@ -15,10 +15,9 @@ import org.andengine.entity.scene.IOnAreaTouchListener;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.ITouchArea;
 import org.andengine.entity.scene.Scene;
-import org.andengine.entity.scene.background.AutoParallaxBackground;
+import org.andengine.entity.scene.background.ParallaxBackground;
 import org.andengine.entity.scene.background.ParallaxBackground.ParallaxEntity;
 import org.andengine.entity.sprite.Sprite;
-import org.andengine.entity.sprite.TiledSprite;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
@@ -32,17 +31,17 @@ import org.andengine.input.touch.detector.ScrollDetector;
 import org.andengine.input.touch.detector.ScrollDetector.IScrollDetectorListener;
 import org.andengine.input.touch.detector.SurfaceScrollDetector;
 import org.andengine.opengl.font.Font;
-import org.andengine.opengl.font.StrokeFont;
+import org.andengine.opengl.font.FontFactory;
 import org.andengine.opengl.texture.ITexture;
+import org.andengine.opengl.texture.Texture;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
-import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
+import org.andengine.opengl.texture.bitmap.ResourceBitmapTexture;
 import org.andengine.opengl.texture.region.ITextureRegion;
-import org.andengine.opengl.texture.region.TiledTextureRegion;
+import org.andengine.opengl.texture.region.TextureRegionFactory;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.ui.dialog.StringInputDialogBuilder;
-import org.andengine.util.adt.list.SmartList;
 import org.andengine.util.call.Callback;
 
 import android.app.Dialog;
@@ -52,6 +51,7 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -71,12 +71,9 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	// Constants
 	// ===========================================================
 
-	private static final float CAMERA_HEIGHT = 723;
-	private static final float CAMERA_WIDTH = 1024 ;
 	private static final float CAMERA_ZOOM_FACTOR = 1f;
-	
-	private static final int TRIGGER_HOLD_MIN_MILISECONDS = 300;
-	
+	private static final int BACKGROUND_HEIGHT = 2400;
+	public static final float BORDER = 1000f;
 	public static final int DIALOG_NEW_TASK_ID = 0;
 	public static final int DIALOG_EDIT_TASK_ID = DIALOG_NEW_TASK_ID + 1;
 	public static final int DIALOG_CONTEXT_ID = DIALOG_EDIT_TASK_ID + 1;
@@ -86,19 +83,16 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	public static final String KEY_TASK_Y = "tY";
 	private TaskDbHandler mDbHandler;
 	private HashMap<Long, TaskSprite> mIdToSprite;
-	private BitmapTextureAtlas mAutoParallaxBackgroundTexture;
-	private BitmapTextureAtlas mBitmapTextureAtlas;
 	private Font mFont;
-	private ITextureRegion mParallaxLayerFront;
+	private ITextureRegion mBackgroundTextureRegion;
 	private Scene mScene;
 	private ITextureRegion mTaskTextureRegion;
 	// private Camera mCamera;
 	private TouchController mTouchController;
 	private TaskSpritesTouchListener mTaskSpriteController;
 	private ZoomCamera mZoomCamera;
-	private BitmapTextureAtlas mHUDTexture;
-	private TiledTextureRegion mAddButtonTextureRegion;
-	private TiledTextureRegion mDelButtonTextureRegion;
+	private ITextureRegion mAddButtonTextureRegion;
+	private ITextureRegion mDelButtonTextureRegion;
 	protected PhysicsWorld mPhysicsWorld;
 	private final FixtureDef FIXTURE_DEF = PhysicsFactory.createFixtureDef(1, 0f, 0f);
 
@@ -146,14 +140,14 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	
 	@Override
 	public EngineOptions onCreateEngineOptions() {
-		this.mZoomCamera = new ZoomCamera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
-		this.mZoomCamera.setBounds(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
-		this.mZoomCamera.setZoomFactor(CAMERA_ZOOM_FACTOR);
+		final DisplayMetrics metrics = this.getResources().getDisplayMetrics();
+		this.mZoomCamera = new ZoomCamera(0, 0, metrics.widthPixels, metrics.heightPixels);
+		this.mZoomCamera.setBounds(0, 0, metrics.widthPixels, BACKGROUND_HEIGHT);
 		this.mZoomCamera.setBoundsEnabled(true);
-		
-		
+		this.mZoomCamera.setZoomFactor(CAMERA_ZOOM_FACTOR);
+			
 		final EngineOptions engineOptions = new EngineOptions(true,ScreenOrientation.LANDSCAPE_FIXED, 
-				new RatioResolutionPolicy(CAMERA_WIDTH, CAMERA_HEIGHT), this.mZoomCamera);
+				new RatioResolutionPolicy(metrics.widthPixels,metrics.heightPixels), this.mZoomCamera);
 		engineOptions.getTouchOptions().setNeedsMultiTouch(true);
 		
 		return engineOptions;
@@ -173,32 +167,38 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	
 	@Override
 	protected void onCreateResources() {
-		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
-		
-		this.mBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(),512, 512, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		
-		final ITexture strokeFontTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, TextureOptions.BILINEAR);
-		this.mTaskTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mBitmapTextureAtlas, this, "bubble.png",0, 0);
-		this.mBitmapTextureAtlas.load();
-		
 		//load font 
-		this.mFont = new StrokeFont(this.getFontManager(), strokeFontTexture, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 56, true, Color.WHITE,2, Color.BLACK);
+		final ITexture strokeFontTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, TextureOptions.BILINEAR);
+		this.mFont = FontFactory.createStroke(this.getFontManager(), strokeFontTexture,  Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 56, true, Color.WHITE,2, Color.BLACK);
 		this.mFont.load();
 		
-		//load background
-		this.mAutoParallaxBackgroundTexture = new BitmapTextureAtlas(this.getTextureManager(), 1280, 800, TextureOptions.DEFAULT);
-		this.mParallaxLayerFront = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mAutoParallaxBackgroundTexture, this, "bg5.png", 0, 0);
-		mAutoParallaxBackgroundTexture.load();
-				
-				
-		this.mHUDTexture = new BitmapTextureAtlas(this.getTextureManager(), 150, 150,TextureOptions.BILINEAR);
-		this.mAddButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mHUDTexture, this, "addButton.png", 0, 0, 1, 1);
-		this.mHUDTexture.load();
 		
-		this.mHUDTexture = new BitmapTextureAtlas(this.getTextureManager(), 150, 150,TextureOptions.BILINEAR);
-		this.mDelButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mHUDTexture, this, "delFish.png", 0, 0, 1, 1);
-		this.mHUDTexture.load();
-	}
+		try {
+			// create textures
+			final Texture mBackgroundTexture = new ResourceBitmapTexture(this.getTextureManager(), this.getResources(), R.drawable.background);
+			final Texture mTaskTexture = new ResourceBitmapTexture(this.getTextureManager(), this.getResources(), R.drawable.task);
+			final Texture mAddTexture = new ResourceBitmapTexture(this.getTextureManager(), this.getResources(), R.drawable.add);
+			final Texture mDeleteTexture = new ResourceBitmapTexture(this.getTextureManager(), this.getResources(), R.drawable.delete);
+			
+			// create regions
+			this.mBackgroundTextureRegion = TextureRegionFactory.extractFromTexture(mBackgroundTexture);
+			this.mTaskTextureRegion = TextureRegionFactory.extractFromTexture(mTaskTexture);
+			this.mAddButtonTextureRegion = TextureRegionFactory.extractFromTexture(mAddTexture);
+			this.mDelButtonTextureRegion = TextureRegionFactory.extractFromTexture(mDeleteTexture);
+			//load textures
+			mBackgroundTexture.load();
+			mTaskTexture.load();
+			mAddTexture.load();
+			mDeleteTexture.load();
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+				
+				
+			}
 	
 	
 	@Override
@@ -214,19 +214,21 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		this.mScene.setOnAreaTouchTraversalFrontToBack();
 		
 		//bg stuff
-		final AutoParallaxBackground autoParallaxBackground = new AutoParallaxBackground(0, 0, 0, 5);
-		autoParallaxBackground.attachParallaxEntity(new ParallaxEntity(-10.0f, new Sprite(0, CAMERA_HEIGHT - this.mParallaxLayerFront.getHeight(), this.mParallaxLayerFront, this.getVertexBufferObjectManager())));
-		this.mScene.attachChild(new Sprite(0, CAMERA_HEIGHT - this.mParallaxLayerFront.getHeight(), this.mParallaxLayerFront, this.getVertexBufferObjectManager()));
+		final ParallaxBackground parallaxBackground = new ParallaxBackground(0, 0, 0);
+		parallaxBackground.attachParallaxEntity(new ParallaxEntity(0, new Sprite(0, 0, this.mBackgroundTextureRegion, this.getVertexBufferObjectManager())));
+//		this.mScene.setBackground(parallaxBackground);
+		this.mScene.attachChild(new Sprite(0,0, this.mBackgroundTextureRegion, this.getVertexBufferObjectManager()));
+		
 		//end bg stuff
 		
 		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0, 0), false);
 		
 		final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
-		final Rectangle ground = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, vertexBufferObjectManager);
-		final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, 2, vertexBufferObjectManager);
-		final Rectangle left = new Rectangle(0, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
-		final Rectangle right = new Rectangle(CAMERA_WIDTH - 2, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
-		final Rectangle border = new Rectangle(0, 160, CAMERA_WIDTH, 1, vertexBufferObjectManager);
+		final Rectangle ground = new Rectangle(0, BACKGROUND_HEIGHT - 2, mZoomCamera.getWidth(), 2, vertexBufferObjectManager);
+		final Rectangle roof = new Rectangle(0, 0, mZoomCamera.getWidth(), 2, vertexBufferObjectManager);
+		final Rectangle left = new Rectangle(0, 0, 2, BACKGROUND_HEIGHT, vertexBufferObjectManager);
+		final Rectangle right = new Rectangle(mZoomCamera.getWidth() - 2, 0, 2, BACKGROUND_HEIGHT, vertexBufferObjectManager);
+		final Rectangle border = new Rectangle(0, BORDER, mZoomCamera.getWidth(), 1, vertexBufferObjectManager);
 
 		final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 0.5f, 0.5f);
 		PhysicsFactory.createBoxBody(this.mPhysicsWorld, ground, BodyType.StaticBody, wallFixtureDef);
@@ -237,11 +239,11 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 
 		border.setVisible(false);
 		
-		this.mScene.attachChild(ground);
-		this.mScene.attachChild(roof);
-		this.mScene.attachChild(left);
-		this.mScene.attachChild(right);
-		this.mScene.attachChild(border);
+//		this.mScene.attachChild(ground);
+//		this.mScene.attachChild(roof);
+//		this.mScene.attachChild(left);
+//		this.mScene.attachChild(right);
+//		this.mScene.attachChild(border);
 		
 		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
 		
@@ -249,7 +251,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		//hudButton
 		final HUD hud = new HUD();
 		
-		final TiledSprite addButton = new TiledSprite(this.mAddButtonTextureRegion.getWidth()/2 , CAMERA_HEIGHT - this.mAddButtonTextureRegion.getHeight(), this.mAddButtonTextureRegion, this.getVertexBufferObjectManager()) {
+		final Sprite addButton = new Sprite(this.mAddButtonTextureRegion.getWidth()/2 , mZoomCamera.getHeight() - this.mAddButtonTextureRegion.getHeight(), this.mAddButtonTextureRegion, this.getVertexBufferObjectManager()) {
 			@Override
 			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
 				/**if(pSceneTouchEvent.isActionDown()) {
@@ -273,7 +275,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 					
 					
 					//terugzetten van knop
-					this.setPosition(mAddButtonTextureRegion.getWidth()/2 , CAMERA_HEIGHT - mAddButtonTextureRegion.getHeight());
+					this.setPosition(mAddButtonTextureRegion.getWidth()/2 , mZoomCamera.getHeight() - mAddButtonTextureRegion.getHeight());
 				} else {
 					this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
 				}
@@ -283,7 +285,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		hud.registerTouchArea(addButton);
 		hud.attachChild(addButton);
 		
-		final TiledSprite delButton = new TiledSprite(this.mDelButtonTextureRegion.getWidth()*2, CAMERA_HEIGHT - this.mDelButtonTextureRegion.getHeight(), this.mDelButtonTextureRegion, this.getVertexBufferObjectManager()) {
+		final Sprite delButton = new Sprite(this.mDelButtonTextureRegion.getWidth()*2, mZoomCamera.getHeight() - this.mDelButtonTextureRegion.getHeight(), this.mDelButtonTextureRegion, this.getVertexBufferObjectManager()) {
 			
 			@Override
 			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
@@ -303,7 +305,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 					}
 					
 					//terugzetten van knop
-					this.setPosition(mDelButtonTextureRegion.getWidth()*2, CAMERA_HEIGHT - mDelButtonTextureRegion.getHeight());
+					this.setPosition(mDelButtonTextureRegion.getWidth()*2, mZoomCamera.getHeight() - mDelButtonTextureRegion.getHeight());
 				} else {
 					this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
 				}
@@ -313,7 +315,8 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		hud.registerTouchArea(delButton);
 		hud.attachChild(delButton);
 		
-		mZoomCamera.setZoomFactor(1.5f);
+//		mZoomCamera.setZoomFactor(1.5f);
+		
 		this.mZoomCamera.setHUD(hud);
 		
 		//end hudButton**/
@@ -531,17 +534,17 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		private ContinuousHoldDetector mHoldDetector;
 		private float mPinchZoomStartedCameraZoomFactor;
 		private Scene mScene;
-		private PinchZoomDetector mPinchZoomDetector;
+//		private PinchZoomDetector mPinchZoomDetector;
 		private SurfaceScrollDetector mSurfaceScrollDetector;
 		private float zoomfac;
 		
 		public TouchController(Scene pScene) {
 			this.mScene = pScene;
-			this.mHoldDetector = new ContinuousHoldDetector(this);
-			this.mHoldDetector.setTriggerHoldMinimumMilliseconds(TRIGGER_HOLD_MIN_MILISECONDS);
-			this.mScene.registerUpdateHandler(mHoldDetector);
+//			this.mHoldDetector = new ContinuousHoldDetector(this);
+//			this.mHoldDetector.setTriggerHoldMinimumMilliseconds(TRIGGER_HOLD_MIN_MILISECONDS);
+//			this.mScene.registerUpdateHandler(mHoldDetector);
 			this.mSurfaceScrollDetector = new SurfaceScrollDetector(this);
-			this.mPinchZoomDetector = new PinchZoomDetector(this);
+//			this.mPinchZoomDetector = new PinchZoomDetector(this);
 			this.mScene.setTouchAreaBindingOnActionDownEnabled(true);
 			this.mScene.setTouchAreaBindingOnActionMoveEnabled(false);
 			
@@ -593,27 +596,27 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		
 		@Override
 		public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
-			if (this.mPinchZoomDetector != null) {
-				this.mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
-
-				if (this.mPinchZoomDetector.isZooming()) {
-					this.mSurfaceScrollDetector.setEnabled(false);
-					this.mHoldDetector.setEnabled(false);
-
-				} else {
-					if (pSceneTouchEvent.isActionDown()) {
-
-						this.mSurfaceScrollDetector.setEnabled(true);
-						this.mHoldDetector.setEnabled(true);
-					}
-					this.mHoldDetector.onTouchEvent(pSceneTouchEvent);
-					if(!mHoldDetector.isHolding())
-						this.mSurfaceScrollDetector.onTouchEvent(pSceneTouchEvent);
-
-				}
-			} else {
+//			if (this.mPinchZoomDetector != null) {
+//				this.mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
+//
+//				if (this.mPinchZoomDetector.isZooming()) {
+//					this.mSurfaceScrollDetector.setEnabled(false);
+//					this.mHoldDetector.setEnabled(false);
+//
+//				} else {
+//					if (pSceneTouchEvent.isActionDown()) {
+//
+//						this.mSurfaceScrollDetector.setEnabled(true);
+//						this.mHoldDetector.setEnabled(true);
+//					}
+//					this.mHoldDetector.onTouchEvent(pSceneTouchEvent);
+//					if(!mHoldDetector.isHolding())
+//						this.mSurfaceScrollDetector.onTouchEvent(pSceneTouchEvent);
+//
+//				}
+//			} else {
 				this.mSurfaceScrollDetector.onTouchEvent(pSceneTouchEvent);
-			}
+//			}
 
 			return true;
 		}
@@ -771,7 +774,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		@Override
 		public void onHold(HoldDetector arg0, long arg1, int arg2, float arg3,
 				float arg4) {
-			Visualtasks.this.toastOnUIThread("hold", Toast.LENGTH_SHORT);
+//			Visualtasks.this.toastOnUIThread("hold", Toast.LENGTH_SHORT);
 	
 			
 		}
@@ -779,7 +782,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		@Override
 		public void onHoldFinished(HoldDetector arg0, long arg1, int arg2,
 				float arg3, float arg4) {
-			Visualtasks.this.toastOnUIThread("holdfinished", Toast.LENGTH_SHORT);
+//			Visualtasks.this.toastOnUIThread("holdfinished", Toast.LENGTH_SHORT);
 			
 		}
 
