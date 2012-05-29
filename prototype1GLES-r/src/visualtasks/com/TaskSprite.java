@@ -205,9 +205,7 @@ public class TaskSprite extends Sprite {
 			 		body.setLinearVelocity(velocityv);
 			 		body.setActive(true);
 			 		Vector2Pool.recycle(velocityv);
-				
 			}
-			
 			break;
 		}
 		

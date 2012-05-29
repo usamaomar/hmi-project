@@ -803,8 +803,8 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 				Visualtasks.this.runOnUiThread(new Runnable(){
 					@Override
 					public void run() {
-						Visualtasks.this.removeDialog(Visualtasks.DIALOG_CONTEXT_ID);
-						Visualtasks.this.showDialog(Visualtasks.DIALOG_CONTEXT_ID, bundle);
+						Visualtasks.this.removeDialog(Visualtasks.DIALOG_EDIT_TASK_ID);
+						Visualtasks.this.showDialog(Visualtasks.DIALOG_EDIT_TASK_ID, bundle);
 						
 					}});
 				this.mHoldDetector.setEnabled(true);;
