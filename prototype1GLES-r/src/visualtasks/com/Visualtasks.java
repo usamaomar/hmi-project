@@ -5,11 +5,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.andengine.engine.camera.SmoothCamera;
 import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.engine.camera.hud.HUD;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.FillResolutionPolicy;
+import org.andengine.entity.IEntity;
 import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.scene.IOnAreaTouchListener;
 import org.andengine.entity.scene.IOnSceneTouchListener;
@@ -90,12 +92,12 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	// private Camera mCamera;
 	private TouchController mTouchController;
 	private TaskSpritesTouchListener mTaskSpriteController;
-	private ZoomCamera mZoomCamera;
+	private SmoothCamera mSmoothCamera;
 	private ITextureRegion mAddButtonTextureRegion;
 	private ITextureRegion mDelButtonTextureRegion;
 	protected PhysicsWorld mPhysicsWorld;
 	private final FixtureDef FIXTURE_DEF = PhysicsFactory.createFixtureDef(1, 0f, 0f);
-
+	private boolean mHudEnabled = true;
 //	private HashMap<Long,Task> mTaskList;
 	// ===========================================================
 	// Getter & Setter
@@ -141,13 +143,13 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	@Override
 	public EngineOptions onCreateEngineOptions() {
 		final DisplayMetrics metrics = this.getResources().getDisplayMetrics();
-		this.mZoomCamera = new ZoomCamera(0, START_HEIGHT, metrics.widthPixels / metrics.density, metrics.heightPixels/ metrics.density);
-		this.mZoomCamera.setBounds(0, 0, metrics.widthPixels, BACKGROUND_HEIGHT);
-		this.mZoomCamera.setBoundsEnabled(true);
-		this.mZoomCamera.setZoomFactor(CAMERA_ZOOM_FACTOR);
-			
+		this.mSmoothCamera = new SmoothCamera(0, START_HEIGHT, metrics.widthPixels , metrics.heightPixels, 0, 100f, 0);
+		this.mSmoothCamera.setBounds(0, 0, metrics.widthPixels, BACKGROUND_HEIGHT);
+		this.mSmoothCamera.setBoundsEnabled(true);
+		this.mSmoothCamera.setZoomFactor(CAMERA_ZOOM_FACTOR);
+		
 		final EngineOptions engineOptions = new EngineOptions(true,ScreenOrientation.LANDSCAPE_FIXED, 
-				new FillResolutionPolicy(), this.mZoomCamera);
+				new FillResolutionPolicy(), this.mSmoothCamera);
 		engineOptions.getTouchOptions().setNeedsMultiTouch(true);
 		
 		return engineOptions;
@@ -197,9 +199,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 			
 		}
 
-				
-				
-			}
+	}
 	
 	
 	@Override
@@ -213,6 +213,8 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		this.mScene.setOnSceneTouchListener(this.mTouchController);
 		this.mScene.setOnAreaTouchListener(mTaskSpriteController);
 		this.mScene.setOnAreaTouchTraversalFrontToBack();
+		
+		
 		
 		//bg stuff
 //		final ParallaxBackground parallaxBackground = new ParallaxBackground(0, 0, 0);
@@ -228,11 +230,11 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0, 0), false);
 		
 		final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
-		final Rectangle ground = new Rectangle(0, BACKGROUND_HEIGHT - 2, mZoomCamera.getWidth(), 2, vertexBufferObjectManager);
-		final Rectangle roof = new Rectangle(0, 0, mZoomCamera.getWidth(), 2, vertexBufferObjectManager);
+		final Rectangle ground = new Rectangle(0, BACKGROUND_HEIGHT - 2, mSmoothCamera.getWidth(), 2, vertexBufferObjectManager);
+		final Rectangle roof = new Rectangle(0, 0, mSmoothCamera.getWidth(), 2, vertexBufferObjectManager);
 		final Rectangle left = new Rectangle(0, 0, 2, BACKGROUND_HEIGHT, vertexBufferObjectManager);
-		final Rectangle right = new Rectangle(mZoomCamera.getWidth() - 2, 0, 2, BACKGROUND_HEIGHT, vertexBufferObjectManager);
-		final Rectangle border = new Rectangle(0, BORDER, mZoomCamera.getWidth(), 1, vertexBufferObjectManager);
+		final Rectangle right = new Rectangle(mSmoothCamera.getWidth() - 2, 0, 2, BACKGROUND_HEIGHT, vertexBufferObjectManager);
+		final Rectangle border = new Rectangle(0, BORDER, mSmoothCamera.getWidth(), 1, vertexBufferObjectManager);
 
 		final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 0.5f, 0.5f);
 		PhysicsFactory.createBoxBody(this.mPhysicsWorld, ground, BodyType.StaticBody, wallFixtureDef);
@@ -253,11 +255,29 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		
 		
 		//hudButton
-		final HUD hud = new HUD();
+		final HUD hud = new HUD();//{
+//			on
+//			
+//			@Override
+//			protected void onManagedUpdate(float pSecondsElapsed) {
+//				if(mHudEnabled && getTouchAreas().isEmpty()){
+//					for(IEntity child: this.mChildren){
+//						this.registerTouchArea((ITouchArea)child);
+//					}
+//					
+//				}
+//				if(!mHudEnabled && !getTouchAreas().isEmpty()){
+//					this.clearTouchAreas();
+//				}
+//				super.onManagedUpdate(pSecondsElapsed);
+//			}
+//		};
 		
-		final Sprite addButton = new Sprite(this.mAddButtonTextureRegion.getWidth()/2 , mZoomCamera.getHeight() - this.mAddButtonTextureRegion.getHeight(), this.mAddButtonTextureRegion, this.getVertexBufferObjectManager()) {
+		final Sprite addButton = new Sprite(this.mAddButtonTextureRegion.getWidth()/2 , mSmoothCamera.getHeight() - this.mAddButtonTextureRegion.getHeight(), this.mAddButtonTextureRegion, this.getVertexBufferObjectManager()) {
 			@Override
 			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+				if(!mHudEnabled)
+					return false;
 				/**if(pSceneTouchEvent.isActionDown()) {
 						Visualtasks.this.runOnUiThread(new Runnable() {
 							@Override
@@ -266,9 +286,9 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 							}
 						});
 				}**/
-				if(pSceneTouchEvent.isActionUp()) {
+				if(pSceneTouchEvent.isActionUp() || pSceneTouchEvent.isActionCancel()|| pSceneTouchEvent.isActionOutside()) {
 					this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
-					final float[] coord = mZoomCamera.getSceneCoordinatesFromCameraSceneCoordinates(this.getSceneCenterCoordinates());
+					final float[] coord = mSmoothCamera.getSceneCoordinatesFromCameraSceneCoordinates(this.getSceneCenterCoordinates());
 					final Bundle bundle = new Bundle();
 					
 					bundle.putFloat(KEY_TASK_X, coord[0]);
@@ -281,7 +301,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 					
 					
 					//terugzetten van knop
-					this.setPosition(mAddButtonTextureRegion.getWidth()/2 , mZoomCamera.getHeight() - mAddButtonTextureRegion.getHeight());
+					this.setPosition(mAddButtonTextureRegion.getWidth()/2 , mSmoothCamera.getHeight() - mAddButtonTextureRegion.getHeight());
 				} else {
 					this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
 				}
@@ -291,11 +311,14 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		hud.registerTouchArea(addButton);
 		hud.attachChild(addButton);
 		
-		final Sprite delButton = new Sprite(this.mDelButtonTextureRegion.getWidth()*2, mZoomCamera.getHeight() - this.mDelButtonTextureRegion.getHeight(), this.mDelButtonTextureRegion, this.getVertexBufferObjectManager()) {
+		final Sprite delButton = new Sprite(this.mDelButtonTextureRegion.getWidth()*2, mSmoothCamera.getHeight() - this.mDelButtonTextureRegion.getHeight(), this.mDelButtonTextureRegion, this.getVertexBufferObjectManager()) {
 			
 			@Override
 			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-				if(pSceneTouchEvent.isActionUp()) {
+				if(!mHudEnabled)
+					return false;
+				
+				if(pSceneTouchEvent.isActionUp() || pSceneTouchEvent.isActionCancel()|| pSceneTouchEvent.isActionOutside()) {
 					final float x = pSceneTouchEvent.getX() - this.getWidth() / 2;
 					final float y = pSceneTouchEvent.getY() - this.getHeight() / 2;
 					
@@ -303,7 +326,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 					
 					//check voor collision en verwijderen van bubble als dat het geval is.
 					
-					TaskSprite spriteToDelete = Visualtasks.this.getTaskSpriteAtPosition(mZoomCamera.getSceneCoordinatesFromCameraSceneCoordinates(
+					TaskSprite spriteToDelete = Visualtasks.this.getTaskSpriteAtPosition(mSmoothCamera.getSceneCoordinatesFromCameraSceneCoordinates(
 							this.getSceneCenterCoordinates()));
 							
 					if (spriteToDelete != null){
@@ -311,7 +334,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 					}
 					
 					//terugzetten van knop
-					this.setPosition(mDelButtonTextureRegion.getWidth()*2, mZoomCamera.getHeight() - mDelButtonTextureRegion.getHeight());
+					this.setPosition(mDelButtonTextureRegion.getWidth()*2, mSmoothCamera.getHeight() - mDelButtonTextureRegion.getHeight());
 				} else {
 					this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
 				}
@@ -323,7 +346,8 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		
 //		mZoomCamera.setZoomFactor(1.5f);
 		
-		this.mZoomCamera.setHUD(hud);
+		this.mSmoothCamera.setHUD(hud);
+		hud.setOnSceneTouchListenerBindingOnActionDownEnabled(true);
 		
 		//end hudButton**/
 		
@@ -376,8 +400,8 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	protected Dialog onCreateDialog(int id, final Bundle bundle) {
 		switch(id){
 		case DIALOG_NEW_TASK_ID:
-			final float pX = bundle != null && bundle.containsKey(KEY_TASK_X) ? bundle.getFloat(KEY_TASK_X) : (this.mZoomCamera.getXMax()-this.mZoomCamera.getXMin())/2f;
-			final float pY = bundle != null &&bundle.containsKey(KEY_TASK_Y) ? bundle.getFloat(KEY_TASK_Y) : (this.mZoomCamera.getYMax()-this.mZoomCamera.getYMin())/2f;
+			final float pX = bundle != null && bundle.containsKey(KEY_TASK_X) ? bundle.getFloat(KEY_TASK_X) : (this.mSmoothCamera.getXMax()-this.mSmoothCamera.getXMin())/2f;
+			final float pY = bundle != null &&bundle.containsKey(KEY_TASK_Y) ? bundle.getFloat(KEY_TASK_Y) : (this.mSmoothCamera.getYMax()-this.mSmoothCamera.getYMin())/2f;
 			
 			return new StringInputDialogBuilder(this,R.string.dialog_task_new_title,0, R.string.dialog_task_new_message, android.R.drawable.ic_dialog_info, "",
 				    new Callback<String>() {
@@ -532,20 +556,17 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	}
 	
 	
-	/**
-	 * Touch Controller for the scene.
-	 * Only scroll is needed for the version with buttons
-	 * Double tap/Hold is also needed for the version without buttons
-	 */
+			
 		
-	class TouchController implements IOnSceneTouchListener,IScrollDetectorListener/**, IPinchZoomDetectorListener, IHoldDetectorListener**/{
+	class TouchController implements IOnSceneTouchListener,IScrollDetectorListener, IPinchZoomDetectorListener, IHoldDetectorListener{
 
 		private int lastTouchId;
-//		private ContinuousHoldDetector mHoldDetector;
-//		private float mPinchZoomStartedCameraZoomFactor;
+		private ContinuousHoldDetector mHoldDetector;
+		private float mPinchZoomStartedCameraZoomFactor;
 		private Scene mScene;
 //		private PinchZoomDetector mPinchZoomDetector;
 		private SurfaceScrollDetector mSurfaceScrollDetector;
+		private float zoomfac;
 		
 		public TouchController(Scene pScene) {
 			this.mScene = pScene;
@@ -555,13 +576,14 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 			this.mSurfaceScrollDetector = new SurfaceScrollDetector(this);
 //			this.mPinchZoomDetector = new PinchZoomDetector(this);
 			this.mScene.setTouchAreaBindingOnActionDownEnabled(true);
-			this.mScene.setTouchAreaBindingOnActionMoveEnabled(false);
+			this.mScene.setTouchAreaBindingOnActionMoveEnabled(true);
+			
 			
 			
 			//this.mPinchZoomDetector.setEnabled(false);
 		}
 		
-		/**@Override
+		@Override
 		public void onHold(HoldDetector pHoldDetector, long pHoldTimeMilliseconds, int pPointerID, float pHoldX, float pHoldY) {
 			
 		}
@@ -571,7 +593,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 			//verplaatst naar onHoldStarted(), vond ik logischer
 			/**pHoldDetector.setEnabled(false);
 			showPopUp(pHoldX, pHoldY);
-			pHoldDetector.setEnabled(true);
+			pHoldDetector.setEnabled(true);**/
 		}
 
 		@Override
@@ -586,7 +608,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 			//mZoomCamera.setZoomFactor(mPinchZoomStartedCameraZoomFactor * pZoomFactor);
 			zoomfac = mPinchZoomStartedCameraZoomFactor * pZoomFactor ;
 			if(1.0 < zoomfac && zoomfac < 2.0){
-				mZoomCamera.setZoomFactor(zoomfac);
+				mSmoothCamera.setZoomFactor(zoomfac);
 			}
 		}
 
@@ -594,14 +616,14 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		public void onPinchZoomFinished(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
 			//mZoomCamera.setZoomFactor(mPinchZoomStartedCameraZoomFactor * pZoomFactor);
 			if(1.0 < zoomfac && zoomfac < 2.0){
-				mZoomCamera.setZoomFactor(zoomfac);
+				mSmoothCamera.setZoomFactor(zoomfac);
 			}
 		}
 
 		@Override
 		public void onPinchZoomStarted(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent) {
-			mPinchZoomStartedCameraZoomFactor = mZoomCamera.getZoomFactor();
-		}**/
+			mPinchZoomStartedCameraZoomFactor = mSmoothCamera.getZoomFactor();
+		}
 		
 		@Override
 		public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
@@ -626,7 +648,18 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 //			} else {
 				this.mSurfaceScrollDetector.onTouchEvent(pSceneTouchEvent);
 //			}
-
+			switch(pSceneTouchEvent.getAction()){
+			case TouchEvent.ACTION_DOWN:
+			case TouchEvent.ACTION_MOVE:
+				
+				mHudEnabled = false;
+				break;
+			case TouchEvent.ACTION_UP:
+			case TouchEvent.ACTION_CANCEL:
+				
+				mHudEnabled = true;
+				break;
+			}
 			return true;
 		}
 
@@ -637,8 +670,8 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 				pScrollDetector.reset();
 			}
 			else {
-				final float zoomFactor = Visualtasks.this.mZoomCamera.getZoomFactor();
-				Visualtasks.this.mZoomCamera.offsetCenter(-pDistanceX , -pDistanceY );
+				final float zoomFactor = Visualtasks.this.mSmoothCamera.getZoomFactor();
+				Visualtasks.this.mSmoothCamera.setCenterDirect(mSmoothCamera.getCenterX()-pDistanceX , mSmoothCamera.getCenterY()-pDistanceY );
 			}
 		}
 
@@ -649,8 +682,8 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 				pScrollDetector.reset();
 			}
 			else {
-				final float zoomFactor = Visualtasks.this.mZoomCamera.getZoomFactor();
-				Visualtasks.this.mZoomCamera.offsetCenter(-pDistanceX, -pDistanceY );
+				final float zoomFactor = Visualtasks.this.mSmoothCamera.getZoomFactor();
+				Visualtasks.this.mSmoothCamera.setCenterDirect(mSmoothCamera.getCenterX()-pDistanceX , mSmoothCamera.getCenterY()-pDistanceY );
 			}
 			
 		}
@@ -662,12 +695,6 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		}
 		
 	}
-	
-	/**
-	 * Touch controller for a bubble sprite
-	 * Pinch-to-zoom/resize, scroll and double tap/hold is needed
-	 *
-	 */
 	
 	class TaskSpritesTouchListener implements IOnAreaTouchListener,IPinchZoomDetectorListener, IHoldDetectorListener, IScrollDetectorListener{
 		
@@ -719,6 +746,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 				case TouchEvent.ACTION_DOWN:
 					mSelectedSprite = ts;
 					mSelectedSprite.setSelected(true);
+					mHudEnabled = false;
 				case TouchEvent.ACTION_OUTSIDE:
 					
 				
@@ -732,6 +760,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 						mSelectedSprite = null;
 						
 					}
+					mHudEnabled = true;
 						
 				}
 				this.mPinchZoomDetector.onTouchEvent(pAreaTouchEvent);
