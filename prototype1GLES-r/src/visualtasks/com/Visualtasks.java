@@ -5,13 +5,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.andengine.engine.camera.SmoothCamera;
 import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.engine.camera.hud.HUD;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.FillResolutionPolicy;
-import org.andengine.entity.IEntity;
 import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.scene.IOnAreaTouchListener;
 import org.andengine.entity.scene.IOnSceneTouchListener;
@@ -29,7 +27,6 @@ import org.andengine.input.touch.detector.PinchZoomDetector;
 import org.andengine.input.touch.detector.PinchZoomDetector.IPinchZoomDetectorListener;
 import org.andengine.input.touch.detector.ScrollDetector;
 import org.andengine.input.touch.detector.ScrollDetector.IScrollDetectorListener;
-import org.andengine.input.touch.detector.SurfaceScrollDetector;
 import org.andengine.opengl.font.Font;
 import org.andengine.opengl.font.FontFactory;
 import org.andengine.opengl.texture.ITexture;
@@ -59,6 +56,10 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.Toast;
+import brr.AndroidStrategy.MapControl.FlingGestureDetector;
+import brr.AndroidStrategy.MapControl.FlingGestureDetector.IFlingGestureListener;
+import brr.AndroidStrategy.MapControl.MapScroller;
+import brr.AndroidStrategy.MapControl.SurfaceFlingGestureDetector;
 
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
@@ -92,7 +93,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	// private Camera mCamera;
 	private TouchController mTouchController;
 	private TaskSpritesTouchListener mTaskSpriteController;
-	private SmoothCamera mSmoothCamera;
+	private ZoomCamera mSmoothCamera;
 	private ITextureRegion mAddButtonTextureRegion;
 	private ITextureRegion mDelButtonTextureRegion;
 	protected PhysicsWorld mPhysicsWorld;
@@ -143,7 +144,8 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	@Override
 	public EngineOptions onCreateEngineOptions() {
 		final DisplayMetrics metrics = this.getResources().getDisplayMetrics();
-		this.mSmoothCamera = new SmoothCamera(0, START_HEIGHT, metrics.widthPixels , metrics.heightPixels, 0, 100f, 0);
+//		this.mSmoothCamera = new SmoothCamera(0, START_HEIGHT, metrics.widthPixels , metrics.heightPixels, 0, 100f, 0);
+		this.mSmoothCamera = new ZoomCamera(0, START_HEIGHT, metrics.widthPixels , metrics.heightPixels);
 		this.mSmoothCamera.setBounds(0, 0, metrics.widthPixels, BACKGROUND_HEIGHT);
 		this.mSmoothCamera.setBoundsEnabled(true);
 		this.mSmoothCamera.setZoomFactor(CAMERA_ZOOM_FACTOR);
@@ -558,28 +560,49 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	
 			
 		
-	class TouchController implements IOnSceneTouchListener,IScrollDetectorListener, IPinchZoomDetectorListener, IHoldDetectorListener{
+	class TouchController implements IOnSceneTouchListener,IScrollDetectorListener, IPinchZoomDetectorListener, IHoldDetectorListener, IFlingGestureListener{
 
 		private int lastTouchId;
 		private ContinuousHoldDetector mHoldDetector;
 		private float mPinchZoomStartedCameraZoomFactor;
 		private Scene mScene;
 //		private PinchZoomDetector mPinchZoomDetector;
-		private SurfaceScrollDetector mSurfaceScrollDetector;
+//		private SurfaceScrollDetector mSurfaceScrollDetector;
+		private  FlingGestureDetector mGestureDetector;
 		private float zoomfac;
+		private MapScroller mMapScroller;
 		
 		public TouchController(Scene pScene) {
 			this.mScene = pScene;
+			
+			// register mapscroller
+			this.mMapScroller = new MapScroller(mSmoothCamera);
+			
+			Visualtasks.this.runOnUiThread(new Runnable() {
+				
+				@Override
+				public void run() {
+					final FlingGestureDetector det = new FlingGestureDetector(Visualtasks.this);
+					det.setEnabled(true);
+					det.setOnFlingGestureListener(TouchController.this);
+					 TouchController.this.mGestureDetector = det;
+					 det.setEnabled(true);
+					 
+				}
+			});
+		
+			this.mScene.registerUpdateHandler(mMapScroller);
+			
 //			this.mHoldDetector = new ContinuousHoldDetector(this);
 //			this.mHoldDetector.setTriggerHoldMinimumMilliseconds(TRIGGER_HOLD_MIN_MILISECONDS);
 //			this.mScene.registerUpdateHandler(mHoldDetector);
-			this.mSurfaceScrollDetector = new SurfaceScrollDetector(this);
+//			this.mSurfaceScrollDetector = new SurfaceScrollDetector(this);
 //			this.mPinchZoomDetector = new PinchZoomDetector(this);
 			this.mScene.setTouchAreaBindingOnActionDownEnabled(true);
 			this.mScene.setTouchAreaBindingOnActionMoveEnabled(true);
 			
 			
-			
+//			this.mGestureDetector.setEnabled(true);
 			//this.mPinchZoomDetector.setEnabled(false);
 		}
 		
@@ -602,6 +625,8 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 			Visualtasks.this.onSceneHold(pHoldX, pHoldY);
 			pHoldDetector.setEnabled(true);
 		}
+		
+		
 		
 		@Override
 		public void onPinchZoom(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
@@ -646,7 +671,10 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 //
 //				}
 //			} else {
-				this.mSurfaceScrollDetector.onTouchEvent(pSceneTouchEvent);
+//				this.mSurfaceScrollDetector.onTouchEvent(pSceneTouchEvent);
+			if(this.mGestureDetector != null )
+				this.mGestureDetector.onSceneTouchEvent(pScene, pSceneTouchEvent);
+			this.mMapScroller.onSceneTouchEvent(mScene, pSceneTouchEvent);
 //			}
 			switch(pSceneTouchEvent.getAction()){
 			case TouchEvent.ACTION_DOWN:
@@ -671,7 +699,8 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 			}
 			else {
 				final float zoomFactor = Visualtasks.this.mSmoothCamera.getZoomFactor();
-				Visualtasks.this.mSmoothCamera.setCenterDirect(mSmoothCamera.getCenterX()-pDistanceX , mSmoothCamera.getCenterY()-pDistanceY );
+//				Visualtasks.this.mSmoothCamera.setCenterDirect(mSmoothCamera.getCenterX()-pDistanceX , mSmoothCamera.getCenterY()-pDistanceY );
+				Visualtasks.this.mSmoothCamera.setCenter(mSmoothCamera.getCenterX()-pDistanceX , mSmoothCamera.getCenterY()-pDistanceY );
 			}
 		}
 
@@ -683,7 +712,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 			}
 			else {
 				final float zoomFactor = Visualtasks.this.mSmoothCamera.getZoomFactor();
-				Visualtasks.this.mSmoothCamera.setCenterDirect(mSmoothCamera.getCenterX()-pDistanceX , mSmoothCamera.getCenterY()-pDistanceY );
+				Visualtasks.this.mSmoothCamera.setCenter(mSmoothCamera.getCenterX()-pDistanceX , mSmoothCamera.getCenterY()-pDistanceY );
 			}
 			
 		}
@@ -693,10 +722,17 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 			lastTouchId = pPointerID;
 			
 		}
+
+		@Override
+		public void onFling(TouchEvent pSceneTouchEvent, float velocityX,
+				float velocityY) {
+//			this.mMapScroller.setSpeedX(velocityX * .8f);
+			this.mMapScroller.setSpeedY(velocityY * .8f);
+		}
 		
 	}
 	
-	class TaskSpritesTouchListener implements IOnAreaTouchListener,IPinchZoomDetectorListener, IHoldDetectorListener, IScrollDetectorListener{
+	class TaskSpritesTouchListener implements IOnAreaTouchListener,IPinchZoomDetectorListener, IHoldDetectorListener, IScrollDetectorListener, IFlingGestureListener{
 		
 
 		private static final int TRIGGER_HOLD_MIN_MILISECONDS = 300;
@@ -704,6 +740,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		private ContinuousHoldDetector mHoldDetector;
 		
 		
+		private FlingGestureDetector mFlingGestureDetector;
 		private PinchZoomDetector mPinchZoomDetector;
 		private ScrollDetector mScrollDetector;
 		private float mStartScaleX, mStartScaleY;
@@ -727,6 +764,18 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 			this.mScrollDetector = new ScrollDetector(this);
 			this.mHoldDetector.setTriggerHoldMinimumMilliseconds(TRIGGER_HOLD_MIN_MILISECONDS);
 			mScene.registerUpdateHandler(mHoldDetector);
+			Visualtasks.this.runOnUiThread(new Runnable() {
+				
+				@Override
+				public void run() {
+					final FlingGestureDetector det = new FlingGestureDetector(Visualtasks.this);
+					det.setEnabled(true);
+					det.setOnFlingGestureListener(TaskSpritesTouchListener.this);
+					TaskSpritesTouchListener.this.mFlingGestureDetector = det;
+					 det.setEnabled(true);
+					 
+				}
+			});
 			
 			
 			
@@ -757,7 +806,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 				case TouchEvent.ACTION_UP:
 					if (mSelectedSprite != null){
 						mSelectedSprite.setSelected(false);
-						mSelectedSprite = null;
+//						mSelectedSprite = null;
 						
 					}
 					mHudEnabled = true;
@@ -766,7 +815,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 				this.mPinchZoomDetector.onTouchEvent(pAreaTouchEvent);
 				this.mHoldDetector.onTouchEvent(pAreaTouchEvent);
 				this.mScrollDetector.onTouchEvent(pAreaTouchEvent);
-				
+				this.mFlingGestureDetector.onTouchEvent(pAreaTouchEvent);
 			}
 			
 			return true;
@@ -875,6 +924,18 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 			if (mSelectedSprite != null){
 				this.mStartScaleX = mSelectedSprite.getScaleX();
 				this.mStartScaleY = mSelectedSprite.getScaleY();
+			}
+		}
+
+
+
+		@Override
+		public void onFling(TouchEvent pSceneTouchEvent, float velocityX,
+				float velocityY) {
+//			Visualtasks.this.toastOnUIThread("fling", Toast.LENGTH_SHORT);
+			if (mSelectedSprite != null){
+				Visualtasks.this.toastOnUIThread("fling", Toast.LENGTH_SHORT);
+				mSelectedSprite.getBody().setLinearVelocity(new Vector2(velocityX, velocityY));
 			}
 		}
 		

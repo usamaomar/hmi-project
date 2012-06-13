@@ -1,5 +1,7 @@
 package visualtasks.com;
 
+import java.util.Vector;
+
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.AutoWrap;
@@ -14,8 +16,6 @@ import org.andengine.opengl.font.Font;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.util.HorizontalAlign;
-
-import android.util.Log;
 
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
@@ -85,10 +85,17 @@ public class TaskSprite extends Sprite {
 			super.setX(pX);
 		} else{
 			this.getBody().setTransform(pX/ PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT, this.getY()/PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT, 0);
+		
 		}
 	}
 	
-	private Body getBody(){
+	
+	public void applyLinearImpulse(Vector2 impulse){
+		if (this.getBody()  == null){
+			this.getBody().applyLinearImpulse(impulse, this.getBody().getWorldCenter());
+		}
+	}
+	public Body getBody(){
 //		PhysicsConnectorManager pcm = mPhysicsWorld.getPhysicsConnectorManager();
 //		return pcm.findBodyByShape(this);
 		return body;
@@ -153,6 +160,8 @@ public class TaskSprite extends Sprite {
 		bodyNeedsUpdate = true;
 	}
 	
+	
+	
 	private void createBody(){
 		body = PhysicsFactory.createCircleBody(mPhysicsWorld, this, BodyType.DynamicBody, mFixtureDef, PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT);
     	  pc = new PhysicsConnector(this, body, true, true, PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT);
@@ -194,7 +203,7 @@ public class TaskSprite extends Sprite {
 		case STATUS_ACTIVE:
 		case STATUS_COMPLETED:
 			if(this.isSelected()){
-				body.setLinearVelocity(0, 0);
+//				body.setLinearVelocity(0, 0);
 				body.setActive(true);
 				if(this.getY() - this.getHeight()/2 < Visualtasks.BORDER+3) {
 					body.setActive(false);
@@ -202,7 +211,7 @@ public class TaskSprite extends Sprite {
 			}
 			else{
 					final Vector2 velocityv = Vector2Pool.obtain(0, -velocity);
-			 		body.setLinearVelocity(velocityv);
+//			 		body.setLinearVelocity(velocityv);
 			 		body.setActive(true);
 			 		Vector2Pool.recycle(velocityv);
 			}
