@@ -3,6 +3,7 @@ package brr.AndroidStrategy.MapControl;
 
 
 
+import org.andengine.engine.camera.SmoothCamera;
 import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.entity.scene.IOnSceneTouchListener;
@@ -14,16 +15,25 @@ import android.view.MotionEvent;
 public class MapScroller implements IOnSceneTouchListener, IUpdateHandler
 {
 
-	private ZoomCamera camera;
-	private boolean touchDown = false;
+	private SmoothCamera camera;
+	private int scrollState = 0;
+	private final static int STATE_START = 0;
+	private final static int STATE_TOUCHDOWN = 1;
+	private final static int STATE_SCROLLING = 2;
+	private final static int STATE_SCROLLING_ENDED = 3;
+	
 	private float speedX;
 	private float speedY;
 	private float lastX;
 	private float lastY;
-	
-	public MapScroller(ZoomCamera camera)
+	private float startY;
+	private float secondsAfterScrollEnded;
+	private float secondsPauseBeforeReturn;
+	public MapScroller(SmoothCamera camera, float startY, float secondsPauseBeforeReturn)
 	{
 		this.camera = camera;
+		this.startY = startY;
+		this.secondsPauseBeforeReturn = secondsPauseBeforeReturn;
 	}
 	
 	@Override
@@ -33,21 +43,21 @@ public class MapScroller implements IOnSceneTouchListener, IUpdateHandler
 		
 		if(evt.getAction() == MotionEvent.ACTION_DOWN)
 		{
-			this.touchDown = true;
+			this.scrollState = MapScroller.STATE_TOUCHDOWN;
 			this.lastX = evt.getRawX();
 			this.lastY = evt.getRawY();	
 			this.speedX = 0;
 			this.speedY = 0;
 		}
-		if(this.touchDown)
+		if(this.scrollState == MapScroller.STATE_TOUCHDOWN)
 		{
-			this.camera.setCenter(camera.getCenterX() + (lastX - evt.getRawX()) / this.camera.getZoomFactor(), camera.getCenterY() + (lastY - evt.getRawY()) / this.camera.getZoomFactor());
+			this.camera.setCenterDirect(camera.getCenterX() + (lastX - evt.getRawX()) / this.camera.getZoomFactor(), camera.getCenterY() + (lastY - evt.getRawY()) / this.camera.getZoomFactor());
 			this.lastX = evt.getRawX();
 			this.lastY = evt.getRawY();	
 		}
 		if(evt.getAction() == MotionEvent.ACTION_UP)
 		{
-			this.touchDown = false;
+			this.scrollState = MapScroller.STATE_SCROLLING;
 		}
 		return false;
 	}
@@ -56,17 +66,41 @@ public class MapScroller implements IOnSceneTouchListener, IUpdateHandler
 	@Override
 	public void onUpdate(float pSecondsElapsed)
 	{
-		if(!this.touchDown && (this.speedX != 0 || this.speedY != 0))
-		{
+		if(this.scrollState == MapScroller.STATE_SCROLLING && (
+				this.speedX == 0 && this.speedY == 0 ||
+				this.camera.getYMax() == this.camera.getBoundsYMax()
+				|| this.camera.getYMin() == this.camera.getBoundsYMin())
+				){
+			this.secondsAfterScrollEnded = 0;
+			this.scrollState = this.STATE_SCROLLING_ENDED;
+			
+		}
+		
+		switch(this.scrollState){
+		case MapScroller.STATE_SCROLLING:
+			
 			//Log.v("AndEngine", "SpeedX: " + String.valueOf(this.speedX) + " SpeedY: " + String.valueOf(this.speedY));
-			this.camera.setCenter(camera.getCenterX() - speedX * pSecondsElapsed / this.camera.getZoomFactor(), camera.getCenterY() - speedY * pSecondsElapsed / this.camera.getZoomFactor());
+			this.camera.setCenterDirect(camera.getCenterX() - speedX * pSecondsElapsed / this.camera.getZoomFactor(), camera.getCenterY() - speedY * pSecondsElapsed / this.camera.getZoomFactor());
 			
 			this.speedX *= (1.0f - 1.2f * pSecondsElapsed);
 			this.speedY *= (1.0f - 1.2f * pSecondsElapsed);
 			
 			if(speedX < 10 && speedX > -10) speedX = 0;
 			if(speedY < 10 && speedY > -10) speedY = 0;
-		}		
+			break;
+		case MapScroller.STATE_SCROLLING_ENDED:
+			this.speedX = 0;
+			this.speedY = 0;
+			if(secondsAfterScrollEnded >= secondsPauseBeforeReturn){
+				this.camera.setCenter(camera.getCenterX(), startY + this.camera.getHeight()/2f);
+				this.scrollState = MapScroller.STATE_START;
+			}
+			else{
+				this.secondsAfterScrollEnded += pSecondsElapsed;
+			}
+			break;
+			
+		}
 	}
 
 	@Override
@@ -97,6 +131,15 @@ public class MapScroller implements IOnSceneTouchListener, IUpdateHandler
 	
 	public void cancelCurScrolling()
 	{
-		this.touchDown = false;
+		this.scrollState = STATE_SCROLLING_ENDED;
+	}
+	
+	public void setStartY(float startY)
+	{
+		this.startY = startY;
+	}
+	
+	public float getStartY() {
+		return startY;
 	}
 }

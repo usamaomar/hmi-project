@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.andengine.engine.camera.SmoothCamera;
 import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.engine.camera.hud.HUD;
 import org.andengine.engine.options.EngineOptions;
@@ -59,7 +60,6 @@ import android.widget.Toast;
 import brr.AndroidStrategy.MapControl.FlingGestureDetector;
 import brr.AndroidStrategy.MapControl.FlingGestureDetector.IFlingGestureListener;
 import brr.AndroidStrategy.MapControl.MapScroller;
-import brr.AndroidStrategy.MapControl.SurfaceFlingGestureDetector;
 
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
@@ -93,7 +93,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	// private Camera mCamera;
 	private TouchController mTouchController;
 	private TaskSpritesTouchListener mTaskSpriteController;
-	private ZoomCamera mSmoothCamera;
+	private SmoothCamera mSmoothCamera;
 	private ITextureRegion mAddButtonTextureRegion;
 	private ITextureRegion mDelButtonTextureRegion;
 	protected PhysicsWorld mPhysicsWorld;
@@ -144,8 +144,8 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	@Override
 	public EngineOptions onCreateEngineOptions() {
 		final DisplayMetrics metrics = this.getResources().getDisplayMetrics();
-//		this.mSmoothCamera = new SmoothCamera(0, START_HEIGHT, metrics.widthPixels , metrics.heightPixels, 0, 100f, 0);
-		this.mSmoothCamera = new ZoomCamera(0, START_HEIGHT, metrics.widthPixels , metrics.heightPixels);
+		this.mSmoothCamera = new SmoothCamera(0, START_HEIGHT, metrics.widthPixels , metrics.heightPixels, 0, 200f, 0);
+//		this.mSmoothCamera = new ZoomCamera(0, START_HEIGHT, metrics.widthPixels , metrics.heightPixels);
 		this.mSmoothCamera.setBounds(0, 0, metrics.widthPixels, BACKGROUND_HEIGHT);
 		this.mSmoothCamera.setBoundsEnabled(true);
 		this.mSmoothCamera.setZoomFactor(CAMERA_ZOOM_FACTOR);
@@ -576,7 +576,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 			this.mScene = pScene;
 			
 			// register mapscroller
-			this.mMapScroller = new MapScroller(mSmoothCamera);
+			this.mMapScroller = new MapScroller(mSmoothCamera, Visualtasks.START_HEIGHT, 2f);
 			
 			Visualtasks.this.runOnUiThread(new Runnable() {
 				
