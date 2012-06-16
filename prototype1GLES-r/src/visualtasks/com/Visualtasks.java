@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.andengine.engine.camera.SmoothCamera;
-import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.engine.camera.hud.HUD;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
@@ -45,6 +44,7 @@ import org.andengine.util.call.Callback;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
+import android.content.DialogInterface.OnDismissListener;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -59,7 +59,7 @@ import android.widget.Button;
 import android.widget.Toast;
 import brr.AndroidStrategy.MapControl.FlingGestureDetector;
 import brr.AndroidStrategy.MapControl.FlingGestureDetector.IFlingGestureListener;
-import brr.AndroidStrategy.MapControl.MapScroller;
+import brr.AndroidStrategy.MapControl.SmoothScrollCamera;
 
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
@@ -67,7 +67,7 @@ import com.badlogic.gdx.physics.box2d.FixtureDef;
 
 import data.TaskDbHandler;
 
-public class Visualtasks extends SimpleBaseGameActivity  {
+public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissListener{
 	// ===========================================================
 	// Constants
 	// ===========================================================
@@ -93,7 +93,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	// private Camera mCamera;
 	private TouchController mTouchController;
 	private TaskSpritesTouchListener mTaskSpriteController;
-	private SmoothCamera mSmoothCamera;
+	private SmoothScrollCamera mCamera;
 	private ITextureRegion mAddButtonTextureRegion;
 	private ITextureRegion mDelButtonTextureRegion;
 	protected PhysicsWorld mPhysicsWorld;
@@ -132,33 +132,32 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		        c.moveToNext();
 		}
 		
-//		for(Task task : mDbHandler.getAllTasks()){
-//			mTaskList.put(task.getID(), task);
-//			new TextSpriteUpdateHandler(mScene, this.mPhysicsWorld, task);
-			
-//		}
-
+		
 		super.onResumeGame();
 	}
 	
 	@Override
 	public EngineOptions onCreateEngineOptions() {
 		final DisplayMetrics metrics = this.getResources().getDisplayMetrics();
-		this.mSmoothCamera = new SmoothCamera(0, START_HEIGHT, metrics.widthPixels , metrics.heightPixels, 0, 200f, 0);
+		this.mCamera = new SmoothScrollCamera(START_HEIGHT, metrics.widthPixels , metrics.heightPixels, 200f, 4f);
 //		this.mSmoothCamera = new ZoomCamera(0, START_HEIGHT, metrics.widthPixels , metrics.heightPixels);
-		this.mSmoothCamera.setBounds(0, 0, metrics.widthPixels, BACKGROUND_HEIGHT);
-		this.mSmoothCamera.setBoundsEnabled(true);
-		this.mSmoothCamera.setZoomFactor(CAMERA_ZOOM_FACTOR);
+		this.mCamera.setBounds(0, 0, metrics.widthPixels, BACKGROUND_HEIGHT);
+		this.mCamera.setBoundsEnabled(true);
+		this.mCamera.setZoomFactor(CAMERA_ZOOM_FACTOR);
 		
 		final EngineOptions engineOptions = new EngineOptions(true,ScreenOrientation.LANDSCAPE_FIXED, 
-				new FillResolutionPolicy(), this.mSmoothCamera);
+				new FillResolutionPolicy(), this.mCamera);
 		engineOptions.getTouchOptions().setNeedsMultiTouch(true);
 		
 		return engineOptions;
 		
 	}
 
-	
+	@Override
+	public void onDismiss(DialogInterface dialog) {
+		mCamera.setAutoScrollBackEnabled(true);
+		
+	}
 	
 	
 	
@@ -168,6 +167,20 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		inflater.inflate(R.menu.menu, menu);
 		return true;
 	}
+	
+	@Override
+	protected void onPrepareDialog(int id, Dialog dialog) {
+		mCamera.setAutoScrollBackEnabled(false);
+		dialog.setOnDismissListener(this);
+		super.onPrepareDialog(id, dialog);
+	}
+	
+	
+	
+	
+	
+	
+	
 	
 	@Override
 	protected void onCreateResources() {
@@ -216,7 +229,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		this.mScene.setOnAreaTouchListener(mTaskSpriteController);
 		this.mScene.setOnAreaTouchTraversalFrontToBack();
 		
-		
+		this.mScene.registerUpdateHandler(mCamera);
 		
 		//bg stuff
 //		final ParallaxBackground parallaxBackground = new ParallaxBackground(0, 0, 0);
@@ -236,11 +249,11 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		mPhysicsWorld.setGravity(new Vector2(0, -0.1f));
 		
 		final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
-		final Rectangle ground = new Rectangle(0, BACKGROUND_HEIGHT - 2, mSmoothCamera.getWidth(), 2, vertexBufferObjectManager);
-		final Rectangle roof = new Rectangle(0, 0, mSmoothCamera.getWidth(), 2, vertexBufferObjectManager);
+		final Rectangle ground = new Rectangle(0, BACKGROUND_HEIGHT - 2, mCamera.getWidth(), 2, vertexBufferObjectManager);
+		final Rectangle roof = new Rectangle(0, 0, mCamera.getWidth(), 2, vertexBufferObjectManager);
 		final Rectangle left = new Rectangle(0, 0, 2, BACKGROUND_HEIGHT, vertexBufferObjectManager);
-		final Rectangle right = new Rectangle(mSmoothCamera.getWidth() - 2, 0, 2, BACKGROUND_HEIGHT, vertexBufferObjectManager);
-		final Rectangle border = new Rectangle(0, BORDER, mSmoothCamera.getWidth(), 1, vertexBufferObjectManager);
+		final Rectangle right = new Rectangle(mCamera.getWidth() - 2, 0, 2, BACKGROUND_HEIGHT, vertexBufferObjectManager);
+		final Rectangle border = new Rectangle(0, BORDER, mCamera.getWidth(), 1, vertexBufferObjectManager);
 
 		final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 0f, 0f);
 		PhysicsFactory.createBoxBody(this.mPhysicsWorld, ground, BodyType.StaticBody, wallFixtureDef);
@@ -279,7 +292,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 //			}
 //		};
 		
-		final Sprite addButton = new Sprite(this.mAddButtonTextureRegion.getWidth()/2 , mSmoothCamera.getHeight() - this.mAddButtonTextureRegion.getHeight(), this.mAddButtonTextureRegion, this.getVertexBufferObjectManager()) {
+		final Sprite addButton = new Sprite(this.mAddButtonTextureRegion.getWidth()/2 , mCamera.getHeight() - this.mAddButtonTextureRegion.getHeight(), this.mAddButtonTextureRegion, this.getVertexBufferObjectManager()) {
 			@Override
 			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
 				if(!mHudEnabled)
@@ -294,7 +307,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 				}**/
 				if(pSceneTouchEvent.isActionUp() || pSceneTouchEvent.isActionCancel()|| pSceneTouchEvent.isActionOutside()) {
 					this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
-					final float[] coord = mSmoothCamera.getSceneCoordinatesFromCameraSceneCoordinates(this.getSceneCenterCoordinates());
+					final float[] coord = mCamera.getSceneCoordinatesFromCameraSceneCoordinates(this.getSceneCenterCoordinates());
 					final Bundle bundle = new Bundle();
 					
 					bundle.putFloat(KEY_TASK_X, coord[0]);
@@ -307,7 +320,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 					
 					
 					//terugzetten van knop
-					this.setPosition(mAddButtonTextureRegion.getWidth()/2 , mSmoothCamera.getHeight() - mAddButtonTextureRegion.getHeight());
+					this.setPosition(mAddButtonTextureRegion.getWidth()/2 , mCamera.getHeight() - mAddButtonTextureRegion.getHeight());
 				} else {
 					this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
 				}
@@ -317,7 +330,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		hud.registerTouchArea(addButton);
 		hud.attachChild(addButton);
 		
-		final Sprite delButton = new Sprite(this.mDelButtonTextureRegion.getWidth()*2, mSmoothCamera.getHeight() - this.mDelButtonTextureRegion.getHeight(), this.mDelButtonTextureRegion, this.getVertexBufferObjectManager()) {
+		final Sprite delButton = new Sprite(this.mDelButtonTextureRegion.getWidth()*2, mCamera.getHeight() - this.mDelButtonTextureRegion.getHeight(), this.mDelButtonTextureRegion, this.getVertexBufferObjectManager()) {
 			
 			@Override
 			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
@@ -332,7 +345,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 					
 					//check voor collision en verwijderen van bubble als dat het geval is.
 					
-					TaskSprite spriteToDelete = Visualtasks.this.getTaskSpriteAtPosition(mSmoothCamera.getSceneCoordinatesFromCameraSceneCoordinates(
+					TaskSprite spriteToDelete = Visualtasks.this.getTaskSpriteAtPosition(mCamera.getSceneCoordinatesFromCameraSceneCoordinates(
 							this.getSceneCenterCoordinates()));
 							
 					if (spriteToDelete != null){
@@ -340,7 +353,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 					}
 					
 					//terugzetten van knop
-					this.setPosition(mDelButtonTextureRegion.getWidth()*2, mSmoothCamera.getHeight() - mDelButtonTextureRegion.getHeight());
+					this.setPosition(mDelButtonTextureRegion.getWidth()*2, mCamera.getHeight() - mDelButtonTextureRegion.getHeight());
 				} else {
 					this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
 				}
@@ -352,7 +365,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		
 //		mZoomCamera.setZoomFactor(1.5f);
 		
-		this.mSmoothCamera.setHUD(hud);
+		this.mCamera.setHUD(hud);
 		hud.setOnSceneTouchListenerBindingOnActionDownEnabled(true);
 		
 		//end hudButton**/
@@ -374,6 +387,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.text:
+			
 			showDialog(DIALOG_NEW_TASK_ID);
 			
 			break;
@@ -390,6 +404,8 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 
 	@Override
 	protected void onPause() {
+		
+		
 		List<TaskSprite> taskList = new ArrayList<TaskSprite>();
 		taskList.addAll(mIdToSprite.values());
 		
@@ -406,8 +422,8 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	protected Dialog onCreateDialog(int id, final Bundle bundle) {
 		switch(id){
 		case DIALOG_NEW_TASK_ID:
-			final float pX = bundle != null && bundle.containsKey(KEY_TASK_X) ? bundle.getFloat(KEY_TASK_X) : (this.mSmoothCamera.getXMax()-this.mSmoothCamera.getXMin())/2f;
-			final float pY = bundle != null &&bundle.containsKey(KEY_TASK_Y) ? bundle.getFloat(KEY_TASK_Y) : (this.mSmoothCamera.getYMax()-this.mSmoothCamera.getYMin())/2f;
+			final float pX = bundle != null && bundle.containsKey(KEY_TASK_X) ? bundle.getFloat(KEY_TASK_X) : (this.mCamera.getXMax()-this.mCamera.getXMin())/2f;
+			final float pY = bundle != null &&bundle.containsKey(KEY_TASK_Y) ? bundle.getFloat(KEY_TASK_Y) : (this.mCamera.getYMax()-this.mCamera.getYMin())/2f;
 			
 			return new StringInputDialogBuilder(this,R.string.dialog_task_new_title,0, R.string.dialog_task_new_message, android.R.drawable.ic_dialog_info, "",
 				    new Callback<String>() {
@@ -415,11 +431,12 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 						public void onCallback(String pCallbackValue) {
 							Visualtasks.this.addTask(pCallbackValue, pX, pY);
 							Visualtasks.this.removeDialog(DIALOG_NEW_TASK_ID);
+							
 						}},   
 					new OnCancelListener() {
 						@Override
 						public void onCancel(DialogInterface arg0) {
-							// nothing
+							Visualtasks.this.removeDialog(DIALOG_NEW_TASK_ID);
 							
 						}})
 			.create();
@@ -436,12 +453,13 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 								
 									taskSprite.setText(pCallbackValue);
 									Visualtasks.this.removeDialog(DIALOG_EDIT_TASK_ID);
+									
 								
 							}},   
 						new OnCancelListener() {
 							@Override
 							public void onCancel(DialogInterface arg0) {
-								// nothing
+								Visualtasks.this.removeDialog(DIALOG_EDIT_TASK_ID);
 							}})
 				.create();
 			}
@@ -500,7 +518,11 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 	
 	
 	
+	
+	
+	
 
+	
 	
 	protected void addTask(String description, float pX, float pY) {
 		Long id = mDbHandler.addTask(description, pX, pY, TaskSprite.STATUS_ACTIVE, 0f);
@@ -511,6 +533,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 
 
 	protected void onSceneHold(float pHoldX, float pHoldY){
+		
 		/**final Bundle bundle = new Bundle();
 		bundle.putFloat(KEY_TASK_X, pHoldX);
 		bundle.putFloat(KEY_TASK_Y, pHoldY);
@@ -536,7 +559,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 			mScene.registerTouchArea(taskSprite);
 			return taskSprite;
 		}
-		return null;
+		return mIdToSprite.get(id);
 //		mDbHandler.addTask(task);
 //		new TextSpriteUpdateHandler(mScene, this.mPhysicsWorld, task);
 		
@@ -574,13 +597,13 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 //		private SurfaceScrollDetector mSurfaceScrollDetector;
 		private  FlingGestureDetector mGestureDetector;
 		private float zoomfac;
-		private MapScroller mMapScroller;
+		
 		
 		public TouchController(Scene pScene) {
 			this.mScene = pScene;
 			
 			// register mapscroller
-			this.mMapScroller = new MapScroller(mSmoothCamera, Visualtasks.START_HEIGHT, 2f);
+			
 			
 			Visualtasks.this.runOnUiThread(new Runnable() {
 				
@@ -595,7 +618,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 				}
 			});
 		
-			this.mScene.registerUpdateHandler(mMapScroller);
+			
 			
 //			this.mHoldDetector = new ContinuousHoldDetector(this);
 //			this.mHoldDetector.setTriggerHoldMinimumMilliseconds(TRIGGER_HOLD_MIN_MILISECONDS);
@@ -637,7 +660,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 			//mZoomCamera.setZoomFactor(mPinchZoomStartedCameraZoomFactor * pZoomFactor);
 			zoomfac = mPinchZoomStartedCameraZoomFactor * pZoomFactor ;
 			if(1.0 < zoomfac && zoomfac < 2.0){
-				mSmoothCamera.setZoomFactor(zoomfac);
+				mCamera.setZoomFactor(zoomfac);
 			}
 		}
 
@@ -645,13 +668,13 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		public void onPinchZoomFinished(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
 			//mZoomCamera.setZoomFactor(mPinchZoomStartedCameraZoomFactor * pZoomFactor);
 			if(1.0 < zoomfac && zoomfac < 2.0){
-				mSmoothCamera.setZoomFactor(zoomfac);
+				mCamera.setZoomFactor(zoomfac);
 			}
 		}
 
 		@Override
 		public void onPinchZoomStarted(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent) {
-			mPinchZoomStartedCameraZoomFactor = mSmoothCamera.getZoomFactor();
+			mPinchZoomStartedCameraZoomFactor = mCamera.getZoomFactor();
 		}
 		
 		@Override
@@ -678,7 +701,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 //				this.mSurfaceScrollDetector.onTouchEvent(pSceneTouchEvent);
 			if(this.mGestureDetector != null )
 				this.mGestureDetector.onSceneTouchEvent(pScene, pSceneTouchEvent);
-			this.mMapScroller.onSceneTouchEvent(mScene, pSceneTouchEvent);
+			mCamera.onSceneTouchEvent(mScene, pSceneTouchEvent);
 //			}
 			switch(pSceneTouchEvent.getAction()){
 			case TouchEvent.ACTION_DOWN:
@@ -702,9 +725,9 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 				pScrollDetector.reset();
 			}
 			else {
-				final float zoomFactor = Visualtasks.this.mSmoothCamera.getZoomFactor();
+				final float zoomFactor = Visualtasks.this.mCamera.getZoomFactor();
 //				Visualtasks.this.mSmoothCamera.setCenterDirect(mSmoothCamera.getCenterX()-pDistanceX , mSmoothCamera.getCenterY()-pDistanceY );
-				Visualtasks.this.mSmoothCamera.setCenter(mSmoothCamera.getCenterX()-pDistanceX , mSmoothCamera.getCenterY()-pDistanceY );
+				Visualtasks.this.mCamera.setCenter(mCamera.getCenterX()-pDistanceX , mCamera.getCenterY()-pDistanceY );
 			}
 		}
 
@@ -715,8 +738,8 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 				pScrollDetector.reset();
 			}
 			else {
-				final float zoomFactor = Visualtasks.this.mSmoothCamera.getZoomFactor();
-				Visualtasks.this.mSmoothCamera.setCenter(mSmoothCamera.getCenterX()-pDistanceX , mSmoothCamera.getCenterY()-pDistanceY );
+				final float zoomFactor = Visualtasks.this.mCamera.getZoomFactor();
+				Visualtasks.this.mCamera.setCenter(mCamera.getCenterX()-pDistanceX , mCamera.getCenterY()-pDistanceY );
 			}
 			
 		}
@@ -731,7 +754,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		public void onFling(TouchEvent pSceneTouchEvent, float velocityX,
 				float velocityY) {
 //			this.mMapScroller.setSpeedX(velocityX * .8f);
-			this.mMapScroller.setSpeedY(velocityY * .8f);
+			mCamera.setSpeedY(velocityY * .8f);
 		}
 		
 	}
@@ -799,6 +822,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 				case TouchEvent.ACTION_DOWN:
 					mSelectedSprite = ts;
 					mSelectedSprite.setSelected(true);
+					mCamera.setAutoScrollBackEnabled(false);
 					mHudEnabled = false;
 				case TouchEvent.ACTION_OUTSIDE:
 					
@@ -813,7 +837,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 //						mSelectedSprite = null;
 						
 					}
-					mHudEnabled = true;
+					mCamera.setAutoScrollBackEnabled(true);
 						
 				}
 				this.mPinchZoomDetector.onTouchEvent(pAreaTouchEvent);
@@ -944,6 +968,8 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		}
 		
 	}
+
+	
 
 	
 

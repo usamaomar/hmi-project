@@ -15,6 +15,7 @@ import android.view.MotionEvent;
 public class MapScroller implements IOnSceneTouchListener, IUpdateHandler
 {
 
+	private boolean enabled = true;
 	private SmoothCamera camera;
 	private int scrollState = 0;
 	private final static int STATE_START = 0;
@@ -39,26 +40,29 @@ public class MapScroller implements IOnSceneTouchListener, IUpdateHandler
 	@Override
 	public boolean onSceneTouchEvent(Scene pScene, TouchEvent touchEvent)
 	{
-		MotionEvent evt = touchEvent.getMotionEvent();
+		if(this.enabled){
+			MotionEvent evt = touchEvent.getMotionEvent();
+			
+			if(evt.getAction() == MotionEvent.ACTION_DOWN)
+			{
+				this.scrollState = MapScroller.STATE_TOUCHDOWN;
+				this.lastX = evt.getRawX();
+				this.lastY = evt.getRawY();	
+				this.speedX = 0;
+				this.speedY = 0;
+			}
+			if(this.scrollState == MapScroller.STATE_TOUCHDOWN)
+			{
+				this.camera.setCenterDirect(camera.getCenterX() + (lastX - evt.getRawX()) / this.camera.getZoomFactor(), camera.getCenterY() + (lastY - evt.getRawY()) / this.camera.getZoomFactor());
+				this.lastX = evt.getRawX();
+				this.lastY = evt.getRawY();	
+			}
+			if(evt.getAction() == MotionEvent.ACTION_UP)
+			{
+				this.scrollState = MapScroller.STATE_SCROLLING;
+			}
+		}
 		
-		if(evt.getAction() == MotionEvent.ACTION_DOWN)
-		{
-			this.scrollState = MapScroller.STATE_TOUCHDOWN;
-			this.lastX = evt.getRawX();
-			this.lastY = evt.getRawY();	
-			this.speedX = 0;
-			this.speedY = 0;
-		}
-		if(this.scrollState == MapScroller.STATE_TOUCHDOWN)
-		{
-			this.camera.setCenterDirect(camera.getCenterX() + (lastX - evt.getRawX()) / this.camera.getZoomFactor(), camera.getCenterY() + (lastY - evt.getRawY()) / this.camera.getZoomFactor());
-			this.lastX = evt.getRawX();
-			this.lastY = evt.getRawY();	
-		}
-		if(evt.getAction() == MotionEvent.ACTION_UP)
-		{
-			this.scrollState = MapScroller.STATE_SCROLLING;
-		}
 		return false;
 	}
 
@@ -66,40 +70,42 @@ public class MapScroller implements IOnSceneTouchListener, IUpdateHandler
 	@Override
 	public void onUpdate(float pSecondsElapsed)
 	{
-		if(this.scrollState == MapScroller.STATE_SCROLLING && (
-				this.speedX == 0 && this.speedY == 0 ||
-				this.camera.getYMax() == this.camera.getBoundsYMax()
-				|| this.camera.getYMin() == this.camera.getBoundsYMin())
-				){
-			this.secondsAfterScrollEnded = 0;
-			this.scrollState = this.STATE_SCROLLING_ENDED;
-			
-		}
-		
-		switch(this.scrollState){
-		case MapScroller.STATE_SCROLLING:
-			
-			//Log.v("AndEngine", "SpeedX: " + String.valueOf(this.speedX) + " SpeedY: " + String.valueOf(this.speedY));
-			this.camera.setCenterDirect(camera.getCenterX() - speedX * pSecondsElapsed / this.camera.getZoomFactor(), camera.getCenterY() - speedY * pSecondsElapsed / this.camera.getZoomFactor());
-			
-			this.speedX *= (1.0f - 1.2f * pSecondsElapsed);
-			this.speedY *= (1.0f - 1.2f * pSecondsElapsed);
-			
-			if(speedX < 10 && speedX > -10) speedX = 0;
-			if(speedY < 10 && speedY > -10) speedY = 0;
-			break;
-		case MapScroller.STATE_SCROLLING_ENDED:
-			this.speedX = 0;
-			this.speedY = 0;
-			if(secondsAfterScrollEnded >= secondsPauseBeforeReturn){
-				this.camera.setCenter(camera.getCenterX(), startY + this.camera.getHeight()/2f);
-				this.scrollState = MapScroller.STATE_START;
+		if(this.enabled){
+			if(this.scrollState == MapScroller.STATE_SCROLLING && (
+					this.speedX == 0 && this.speedY == 0 ||
+					this.camera.getYMax() == this.camera.getBoundsYMax()
+					|| this.camera.getYMin() == this.camera.getBoundsYMin())
+					){
+				this.secondsAfterScrollEnded = 0;
+				this.scrollState = this.STATE_SCROLLING_ENDED;
+				
 			}
-			else{
-				this.secondsAfterScrollEnded += pSecondsElapsed;
-			}
-			break;
 			
+			switch(this.scrollState){
+			case MapScroller.STATE_SCROLLING:
+				
+				//Log.v("AndEngine", "SpeedX: " + String.valueOf(this.speedX) + " SpeedY: " + String.valueOf(this.speedY));
+				this.camera.setCenterDirect(camera.getCenterX() - speedX * pSecondsElapsed / this.camera.getZoomFactor(), camera.getCenterY() - speedY * pSecondsElapsed / this.camera.getZoomFactor());
+				
+				this.speedX *= (1.0f - 1.2f * pSecondsElapsed);
+				this.speedY *= (1.0f - 1.2f * pSecondsElapsed);
+				
+				if(speedX < 10 && speedX > -10) speedX = 0;
+				if(speedY < 10 && speedY > -10) speedY = 0;
+				break;
+			case MapScroller.STATE_SCROLLING_ENDED:
+				this.speedX = 0;
+				this.speedY = 0;
+				if(secondsAfterScrollEnded >= secondsPauseBeforeReturn){
+					this.camera.setCenter(camera.getCenterX(), startY + this.camera.getHeight()/2f);
+					this.scrollState = MapScroller.STATE_START;
+				}
+				else{
+					this.secondsAfterScrollEnded += pSecondsElapsed;
+				}
+				break;
+				
+			}
 		}
 	}
 
@@ -141,5 +147,12 @@ public class MapScroller implements IOnSceneTouchListener, IUpdateHandler
 	
 	public float getStartY() {
 		return startY;
+	}
+	
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+	public boolean isEnabled() {
+		return enabled;
 	}
 }
