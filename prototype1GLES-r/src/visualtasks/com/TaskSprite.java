@@ -1,9 +1,7 @@
 package visualtasks.com;
 
-import java.util.Vector;
-
 import org.andengine.entity.scene.Scene;
-import org.andengine.entity.sprite.Sprite;
+import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.text.AutoWrap;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.text.TextOptions;
@@ -14,6 +12,7 @@ import org.andengine.extension.physics.box2d.util.Vector2Pool;
 import org.andengine.extension.physics.box2d.util.constants.PhysicsConstants;
 import org.andengine.opengl.font.Font;
 import org.andengine.opengl.texture.region.ITextureRegion;
+import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.util.HorizontalAlign;
 
@@ -22,7 +21,7 @@ import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 
-public class TaskSprite extends Sprite {
+public class TaskSprite extends AnimatedSprite {
 
 	private  Font mFont;
 	private Text mText;
@@ -45,7 +44,7 @@ public class TaskSprite extends Sprite {
 	private VertexBufferObjectManager mVBO;
 	private float velocity;
 	
-	public TaskSprite(long id, Scene pScene, FixtureDef fixtureDef, PhysicsWorld physicsWorld, Font pFont, ITextureRegion pTextureRegion,	VertexBufferObjectManager vBOM) {
+	public TaskSprite(long id, Scene pScene, FixtureDef fixtureDef, PhysicsWorld physicsWorld, Font pFont, TiledTextureRegion pTextureRegion,	VertexBufferObjectManager vBOM) {
 		super(120,120,pTextureRegion, vBOM);
 		mVBO =  vBOM;
 		this.id = id;
@@ -57,7 +56,7 @@ public class TaskSprite extends Sprite {
 		velocity = this.getScaleX()*this.getScaleX()*0.5f;
 		setScale(SCALE_DEFAULT);
 //		mScene.registerUpdateHandler(this);
-		
+		body.setFixedRotation(true);
 		
 	}
 

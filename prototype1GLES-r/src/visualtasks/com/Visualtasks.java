@@ -33,9 +33,11 @@ import org.andengine.opengl.texture.ITexture;
 import org.andengine.opengl.texture.Texture;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
+import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.andengine.opengl.texture.bitmap.ResourceBitmapTexture;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.texture.region.TextureRegionFactory;
+import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.ui.dialog.StringInputDialogBuilder;
@@ -89,7 +91,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 	private Font mFont;
 	private ITextureRegion mBackgroundTextureRegion;
 	private Scene mScene;
-	private ITextureRegion mTaskTextureRegion;
+	private TiledTextureRegion mTaskTextureRegion;
 	// private Camera mCamera;
 	private TouchController mTouchController;
 	private TaskSpritesTouchListener mTaskSpriteController;
@@ -99,6 +101,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 	protected PhysicsWorld mPhysicsWorld;
 	private final FixtureDef FIXTURE_DEF = PhysicsFactory.createFixtureDef(1, 0f, 0f);
 	private boolean mHudEnabled = true;
+	private BitmapTextureAtlas mBitmapTextureAtlas;
 //	private HashMap<Long,Task> mTaskList;
 	// ===========================================================
 	// Getter & Setter
@@ -191,15 +194,17 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 		
 		
 		try {
+			BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 			// create textures
 			final Texture mBackgroundTexture = new ResourceBitmapTexture(this.getTextureManager(), this.getResources(), R.drawable.background);
-			final Texture mTaskTexture = new ResourceBitmapTexture(this.getTextureManager(), this.getResources(), R.drawable.task);
+			final Texture mTaskTexture = new ResourceBitmapTexture(this.getTextureManager(), this.getResources(), R.drawable.bubble_tiled);
 			final Texture mAddTexture = new ResourceBitmapTexture(this.getTextureManager(), this.getResources(), R.drawable.add);
 			final Texture mDeleteTexture = new ResourceBitmapTexture(this.getTextureManager(), this.getResources(), R.drawable.delete);
 			
 			// create regions
+			this.mBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1500, 300, TextureOptions.BILINEAR);
 			this.mBackgroundTextureRegion = TextureRegionFactory.extractFromTexture(mBackgroundTexture);
-			this.mTaskTextureRegion = TextureRegionFactory.extractFromTexture(mTaskTexture);
+			this.mTaskTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlas, this, "bubble_tiled.png", 0, 0, 5, 1);
 			this.mAddButtonTextureRegion = TextureRegionFactory.extractFromTexture(mAddTexture);
 			this.mDelButtonTextureRegion = TextureRegionFactory.extractFromTexture(mDeleteTexture);
 			//load textures
@@ -207,6 +212,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 			mTaskTexture.load();
 			mAddTexture.load();
 			mDeleteTexture.load();
+			mBitmapTextureAtlas.load();
 			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -575,8 +581,9 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 				
 				@Override
 				public void run() {
-					mScene.unregisterTouchArea(task);
-					mScene.detachChild(task);
+					task.animate(150); <====== (hier onder even gecomment zodat er tijd is voor animatie, maar app stopt na gedeelte van animatie)
+					//mScene.unregisterTouchArea(task);
+					//mScene.detachChild(task);
 					
 				}
 			});
@@ -963,7 +970,8 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 //			Visualtasks.this.toastOnUIThread("fling", Toast.LENGTH_SHORT);
 			if (mSelectedSprite != null){
 				Visualtasks.this.toastOnUIThread("fling", Toast.LENGTH_SHORT);
-				mSelectedSprite.getBody().setLinearVelocity(new Vector2(velocityX*0.005f, velocityY*0.005f));
+				//mSelectedSprite.getBody().setLinearVelocity(new Vector2(velocityX*0.005f, velocityY*0.005f));
+				
 			}
 		}
 		
