@@ -230,6 +230,10 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		//end bg stuff
 		
 		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0, 0), false);
+		/**
+		 * Gravity wordt hier gezet, moet op 0 gezet worden wanneer er een bubbel collide met border body (body's zweven dan nog wel even verder door impuls?)
+		 */
+		mPhysicsWorld.setGravity(new Vector2(0, -0.1f));
 		
 		final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
 		final Rectangle ground = new Rectangle(0, BACKGROUND_HEIGHT - 2, mSmoothCamera.getWidth(), 2, vertexBufferObjectManager);
@@ -238,7 +242,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 		final Rectangle right = new Rectangle(mSmoothCamera.getWidth() - 2, 0, 2, BACKGROUND_HEIGHT, vertexBufferObjectManager);
 		final Rectangle border = new Rectangle(0, BORDER, mSmoothCamera.getWidth(), 1, vertexBufferObjectManager);
 
-		final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 0.5f, 0.5f);
+		final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 0f, 0f);
 		PhysicsFactory.createBoxBody(this.mPhysicsWorld, ground, BodyType.StaticBody, wallFixtureDef);
 		PhysicsFactory.createBoxBody(this.mPhysicsWorld, roof, BodyType.StaticBody, wallFixtureDef);
 		PhysicsFactory.createBoxBody(this.mPhysicsWorld, left, BodyType.StaticBody, wallFixtureDef);
@@ -470,15 +474,15 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 					
 				}});
 	        
-	        Button complete = (Button) dialog.findViewById(R.id.complete);
-	        complete.setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View arg0) {
-						Visualtasks.this.dismissDialog(DIALOG_CONTEXT_ID);
-						Visualtasks.this.deleteTask(taskSprite2);
-						Toast.makeText(getApplicationContext(), taskSprite2.getText() + " completed.", Toast.LENGTH_SHORT).show();
-
-				}});
+//	        Button complete = (Button) dialog.findViewById(R.id.complete);
+//	        complete.setOnClickListener(new OnClickListener() {
+//				@Override
+//				public void onClick(View arg0) {
+//						Visualtasks.this.dismissDialog(DIALOG_CONTEXT_ID);
+//						Visualtasks.this.deleteTask(taskSprite2);
+//						Toast.makeText(getApplicationContext(), taskSprite2.getText() + " completed.", Toast.LENGTH_SHORT).show();
+//
+//				}});
 	        
 	        dialog.setOnCancelListener( new OnCancelListener() {
 	        	 
@@ -935,7 +939,7 @@ public class Visualtasks extends SimpleBaseGameActivity  {
 //			Visualtasks.this.toastOnUIThread("fling", Toast.LENGTH_SHORT);
 			if (mSelectedSprite != null){
 				Visualtasks.this.toastOnUIThread("fling", Toast.LENGTH_SHORT);
-				mSelectedSprite.getBody().setLinearVelocity(new Vector2(velocityX, velocityY));
+				mSelectedSprite.getBody().setLinearVelocity(new Vector2(velocityX*0.005f, velocityY*0.005f));
 			}
 		}
 		
