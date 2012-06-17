@@ -1,5 +1,7 @@
 package visualtasks.com;
 
+import org.andengine.entity.scene.IOnAreaTouchListener;
+import org.andengine.entity.scene.ITouchArea;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.text.AutoWrap;
@@ -8,20 +10,23 @@ import org.andengine.entity.text.TextOptions;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
-import org.andengine.extension.physics.box2d.util.Vector2Pool;
 import org.andengine.extension.physics.box2d.util.constants.PhysicsConstants;
+import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.font.Font;
-import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.util.HorizontalAlign;
+
+import android.view.MotionEvent;
+import android.widget.Toast;
+import brr.AndroidStrategy.MapControl.SmoothScrollCamera;
 
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 
-public class TaskSprite extends AnimatedSprite {
+public class TaskSprite extends AnimatedSprite implements IOnAreaTouchListener{
 
 	private  Font mFont;
 	private Text mText;
@@ -45,16 +50,18 @@ public class TaskSprite extends AnimatedSprite {
 
 	
 	private int state = 0;
-	public TaskSprite(long id, Scene pScene, FixtureDef fixtureDef, PhysicsWorld physicsWorld, Font pFont, TiledTextureRegion pTextureRegion,	VertexBufferObjectManager vBOM) {
-	private final static int STATE_DEFAULT = 0;
-	private final static int STATE_TOUCHDOWN = 1;
-	private final static int STATE_SCROLLING = 2;
+	public final static int STATE_DEFAULT = 0;
+	public final static int STATE_TOUCHDOWN = 1;
+	public final static int STATE_SCROLLING = 2;
 	
+	
+	private float speedX;
 	private float speedY;
+	private float lastX;
 	private float lastY;
 	private float startY;
 	
-	public TaskSprite(long id, Scene pScene, FixtureDef fixtureDef, PhysicsWorld physicsWorld, Font pFont, ITextureRegion pTextureRegion,	VertexBufferObjectManager vBOM) {
+	public TaskSprite(long id, Scene pScene, FixtureDef fixtureDef, PhysicsWorld physicsWorld, Font pFont, TiledTextureRegion pTextureRegion,	VertexBufferObjectManager vBOM) {
 		super(120,120,pTextureRegion, vBOM);
 		mVBO =  vBOM;
 		this.id = id;
@@ -79,8 +86,52 @@ public class TaskSprite extends AnimatedSprite {
 		deleted = true;
 	}
 	
+	@Override
+	public boolean onAreaTouched(TouchEvent touchEvent, ITouchArea arg1, float arg2,
+			float arg3) {
+		
+		
+		MotionEvent evt = touchEvent.getMotionEvent();
+		
+		if(evt.getAction() == MotionEvent.ACTION_DOWN)
+		{
+			this.setState(STATE_TOUCHDOWN);
+			this.lastX = evt.getRawX();
+			this.lastY = evt.getRawY();	
+			
+		}
+		if(this.getState() == TaskSprite.STATE_TOUCHDOWN)
+		{
+			
+			this.setX(this.getX() - (lastX - evt.getRawX()));
+			this.setY(this.getY() - (lastY - evt.getRawY()) );
+			this.lastX = evt.getRawX();
+			this.lastY = evt.getRawY();	
+		}
+		if(evt.getAction() == MotionEvent.ACTION_UP)
+		{
+			this.setState(TaskSprite.STATE_SCROLLING);
+		}
+		
+		
+		return false;
+	}
 	public void setState(int state) {
 		this.state = state;
+		switch(state){
+		case STATE_DEFAULT:
+			this.getBody().setLinearVelocity(new Vector2(0,0));
+			this.speedY = 0;
+			this.speedX = 0;
+			break;
+		case STATE_SCROLLING:
+			break;
+		case STATE_TOUCHDOWN:
+			this.getBody().setLinearVelocity(new Vector2(0,0));
+			this.speedY = 0;
+			this.speedX = 0;
+			break;
+		}
 	}
 	
 	public int getState() {
@@ -207,22 +258,42 @@ public class TaskSprite extends AnimatedSprite {
 			break;
 		case STATUS_ACTIVE:
 		case STATUS_COMPLETED:
-			if(this.isSelected()){
-//				body.setLinearVelocity(0, 0);
-				body.setActive(true);
-				if(this.getY() - this.getHeight()/2 < Visualtasks.BORDER+3) {
-					body.setActive(false);
-				}
-			}
-			else{
-					final Vector2 velocityv = Vector2Pool.obtain(0, -velocity);
-//			 		body.setLinearVelocity(velocityv);
-			 		body.setActive(true);
-			 		Vector2Pool.recycle(velocityv);
-			}
-			break;
+			
 		}
 		
+		if(this.getStatus() != STATUS_DELETED){
+			switch(this.getState()){
+			case STATE_DEFAULT:
+//				this.getBody().setLinearVelocity(new Vector2(0,0));
+				
+				break;
+			case STATE_SCROLLING:
+				if(this.speedY == 0 ||this.getBody().getLinearVelocity().y == 0){
+			  		this.setState(STATE_DEFAULT);
+					this.getBody().setLinearVelocity(0, 0);
+					speedY = 0;
+				}else{
+					this.setX(this.getX() - speedX * pSecondsElapsed);
+					this.setY(this.getY() + speedY * pSecondsElapsed);
+					
+					this.speedY *=  (1.0f - 1.2f * pSecondsElapsed);
+					this.speedX *= (1.0f - 1.2f * pSecondsElapsed);
+					
+					if(speedY < 10 && speedY > -10) speedY = 0;
+					if(speedX < 10 && speedX > -10) speedX = 0;
+					
+				}
+				break;
+			case STATE_TOUCHDOWN:
+				if((this.getY()- Visualtasks.BORDER)< 10f && body.isActive()) {
+					body.setActive(false);
+				}else if(!body.isActive()){
+					body.setActive(true);
+				}
+				
+				break;
+			}
+		}
 		
 		//set alpha
 		switch(this.getStatus()){
