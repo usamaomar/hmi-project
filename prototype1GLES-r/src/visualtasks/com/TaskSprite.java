@@ -37,14 +37,24 @@ public class TaskSprite extends AnimatedSprite {
 	 private PhysicsConnector pc;
 	private boolean deleted = false;
 	private boolean bodyNeedsUpdate = false;
-	private boolean selected = false;
 	private long id;
 	private Body body;
 	private Scene mScene;
 	private VertexBufferObjectManager mVBO;
 	private float velocity;
+
 	
+	private int state = 0;
 	public TaskSprite(long id, Scene pScene, FixtureDef fixtureDef, PhysicsWorld physicsWorld, Font pFont, TiledTextureRegion pTextureRegion,	VertexBufferObjectManager vBOM) {
+	private final static int STATE_DEFAULT = 0;
+	private final static int STATE_TOUCHDOWN = 1;
+	private final static int STATE_SCROLLING = 2;
+	
+	private float speedY;
+	private float lastY;
+	private float startY;
+	
+	public TaskSprite(long id, Scene pScene, FixtureDef fixtureDef, PhysicsWorld physicsWorld, Font pFont, ITextureRegion pTextureRegion,	VertexBufferObjectManager vBOM) {
 		super(120,120,pTextureRegion, vBOM);
 		mVBO =  vBOM;
 		this.id = id;
@@ -69,14 +79,15 @@ public class TaskSprite extends AnimatedSprite {
 		deleted = true;
 	}
 	
-	
-	public void setSelected(boolean selected) {
-		this.selected = selected;
+	public void setState(int state) {
+		this.state = state;
 	}
 	
-	public boolean isSelected() {
-		return selected;
+	public int getState() {
+		return state;
 	}
+	
+
 	@Override
 	public void setX(float pX) {
 		
@@ -89,11 +100,6 @@ public class TaskSprite extends AnimatedSprite {
 	}
 	
 	
-	public void applyLinearImpulse(Vector2 impulse){
-		if (this.getBody()  == null){
-			this.getBody().applyLinearImpulse(impulse, this.getBody().getWorldCenter());
-		}
-	}
 	public Body getBody(){
 //		PhysicsConnectorManager pcm = mPhysicsWorld.getPhysicsConnectorManager();
 //		return pcm.findBodyByShape(this);
@@ -192,7 +198,7 @@ public class TaskSprite extends AnimatedSprite {
 		if (bodyNeedsUpdate){
 			this.removeBody();
 			this.createBody();
-			velocity = this.getScaleX()*this.getScaleX();
+//			velocity = this.getScaleX()*this.getScaleX();
 			bodyNeedsUpdate = false;
 		}
 		switch(this.getStatus()){
@@ -243,6 +249,10 @@ public class TaskSprite extends AnimatedSprite {
 	
 	public void setUrgency(float urgency){
 		 this.setScale((SCALE_MAX-urgency) * SCALE_FACTOR);
+	}
+	
+	public void setSpeedY(float speedY){
+		this.speedY = speedY;
 	}
 	
 }
