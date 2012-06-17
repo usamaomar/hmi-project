@@ -16,11 +16,8 @@ import org.andengine.opengl.font.Font;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.util.HorizontalAlign;
-
 import android.view.MotionEvent;
-import android.widget.Toast;
 import brr.AndroidStrategy.MapControl.SmoothScrollCamera;
-
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
@@ -47,6 +44,8 @@ public class TaskSprite extends AnimatedSprite implements IOnAreaTouchListener{
 	private Scene mScene;
 	private VertexBufferObjectManager mVBO;
 	private float velocity;
+	private Visualtasks vt;
+	private boolean notYetCompleted = true;
 
 	
 	private int state = 0;
@@ -61,7 +60,7 @@ public class TaskSprite extends AnimatedSprite implements IOnAreaTouchListener{
 	private float lastY;
 	private float startY;
 	
-	public TaskSprite(long id, Scene pScene, FixtureDef fixtureDef, PhysicsWorld physicsWorld, Font pFont, TiledTextureRegion pTextureRegion,	VertexBufferObjectManager vBOM) {
+	public TaskSprite(Visualtasks vt, long id, Scene pScene, FixtureDef fixtureDef, PhysicsWorld physicsWorld, Font pFont, TiledTextureRegion pTextureRegion,	VertexBufferObjectManager vBOM) {
 		super(120,120,pTextureRegion, vBOM);
 		mVBO =  vBOM;
 		this.id = id;
@@ -74,6 +73,7 @@ public class TaskSprite extends AnimatedSprite implements IOnAreaTouchListener{
 		setScale(SCALE_DEFAULT);
 //		mScene.registerUpdateHandler(this);
 		body.setFixedRotation(true);
+		this.vt = vt;
 		
 	}
 
@@ -276,8 +276,8 @@ public class TaskSprite extends AnimatedSprite implements IOnAreaTouchListener{
 					this.setX(this.getX() - speedX * pSecondsElapsed);
 					this.setY(this.getY() + speedY * pSecondsElapsed);
 					
-					this.speedY *=  (1.0f - 1.2f * pSecondsElapsed);
-					this.speedX *= (1.0f - 1.2f * pSecondsElapsed);
+					this.speedY *=  (1.0f - 2f * pSecondsElapsed);
+					this.speedX *= (1.0f - 2f * pSecondsElapsed);
 					
 					if(speedY < 10 && speedY > -10) speedY = 0;
 					if(speedX < 10 && speedX > -10) speedX = 0;
@@ -302,10 +302,16 @@ public class TaskSprite extends AnimatedSprite implements IOnAreaTouchListener{
 		case STATUS_ACTIVE:
 			if(this.getAlpha() != 1f)
 				this.setAlpha(1f);
+			notYetCompleted = true;
 
 			break;
 		case STATUS_COMPLETED:
 			this.setAlpha(0.3f);
+			if(notYetCompleted) {
+				//vt.setComplete(this);
+				vt.toastOnUIThread(getText() + " completed", 0);
+				notYetCompleted = false;
+			}
 			break;
 		}
 		//check if new body needed

@@ -606,7 +606,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 
 	private TaskSprite addTask(long id, String description, float pX, float pY){
 		if(!mIdToSprite.containsKey(id)){
-			TaskSprite taskSprite = new TaskSprite(id,  mScene, FIXTURE_DEF, mPhysicsWorld, mFont, mTaskTextureRegion, getVertexBufferObjectManager());
+			TaskSprite taskSprite = new TaskSprite(this, id,  mScene, FIXTURE_DEF, mPhysicsWorld, mFont, mTaskTextureRegion, getVertexBufferObjectManager());
 			
 			taskSprite.setText(description);
 			taskSprite.setX(pX);
@@ -634,6 +634,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 				@Override
 				public void run() {
 					task.animate(150); //<====== (hier onder even gecomment zodat er tijd is voor animatie, maar app stopt na gedeelte van animatie)
+
 					//mScene.unregisterTouchArea(task);
 					//mScene.detachChild(task);
 					
@@ -641,6 +642,22 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 			});
 			
 		}
+	}
+	
+	public void setComplete(TaskSprite old) {
+		TaskSprite completedSprite = new TaskSprite(this, old.getId(),  mScene, FIXTURE_DEF, mPhysicsWorld, mFont, mTaskTextureRegion, getVertexBufferObjectManager());
+		
+		completedSprite.setText(old.getText());
+		completedSprite.setX(old.getX());
+		completedSprite.setY(old.getY());
+		completedSprite.setScale(old.getScaleX());
+		deleteTask(old);
+		Long id = mDbHandler.addTask(old.getText(), old.getX(), old.getY(), completedSprite.STATUS_COMPLETED, 0f);
+		mIdToSprite.put(id, completedSprite);
+		
+		mScene.attachChild(completedSprite);
+		mScene.registerTouchArea(completedSprite);
+		
 	}
 	
 	
