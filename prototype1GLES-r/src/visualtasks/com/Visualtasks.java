@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.andengine.engine.camera.SmoothCamera;
 import org.andengine.engine.camera.hud.HUD;
+import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.FillResolutionPolicy;
@@ -86,6 +87,12 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 	public static final String KEY_TASK_ID = "key_task_id";
 	public static final String KEY_TASK_X = "tX";
 	public static final String KEY_TASK_Y = "tY";
+	
+	private int status = 0;
+	public static final int STATUS_DEFAULT = 0;
+	public static final int STATUS_TOUCHING_TASK = 1;
+	public static final int STATUS_DIALOG_SHOWED = 2;
+	public static final int STATUS_TOUCHING_SCENE = 3;
 	private TaskDbHandler mDbHandler;
 	private HashMap<Long, TaskSprite> mIdToSprite;
 	private Font mFont;
@@ -98,9 +105,11 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 	private SmoothScrollCamera mCamera;
 	private ITextureRegion mAddButtonTextureRegion;
 	private ITextureRegion mDelButtonTextureRegion;
+	private Sprite mAddButton;
+	private Sprite mDelButton;
 	protected PhysicsWorld mPhysicsWorld;
 	private final FixtureDef FIXTURE_DEF = PhysicsFactory.createFixtureDef(1, 0f, 0f);
-	private boolean mHudEnabled = true;
+	
 	private BitmapTextureAtlas mBitmapTextureAtlas;
 //	private HashMap<Long,Task> mTaskList;
 	// ===========================================================
@@ -158,7 +167,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 
 	@Override
 	public void onDismiss(DialogInterface dialog) {
-		mCamera.setAutoScrollBackEnabled(true);
+		this.setStatus(STATUS_DEFAULT);
 		
 	}
 	
@@ -173,7 +182,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 	
 	@Override
 	protected void onPrepareDialog(int id, Dialog dialog) {
-		mCamera.setAutoScrollBackEnabled(false);
+		this.setStatus(STATUS_DIALOG_SHOWED);
 		dialog.setOnDismissListener(this);
 		super.onPrepareDialog(id, dialog);
 	}
@@ -298,11 +307,10 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 //			}
 //		};
 		
-		final Sprite addButton = new Sprite(this.mAddButtonTextureRegion.getWidth()/2 , mCamera.getHeight() - this.mAddButtonTextureRegion.getHeight(), this.mAddButtonTextureRegion, this.getVertexBufferObjectManager()) {
+		mAddButton = new Sprite(0 , mCamera.getHeight() - this.mAddButtonTextureRegion.getHeight(), this.mAddButtonTextureRegion, this.getVertexBufferObjectManager()) {
 			@Override
 			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-				if(!mHudEnabled)
-					return false;
+				
 				/**if(pSceneTouchEvent.isActionDown()) {
 						Visualtasks.this.runOnUiThread(new Runnable() {
 							@Override
@@ -326,23 +334,21 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 					
 					
 					//terugzetten van knop
-					this.setPosition(mAddButtonTextureRegion.getWidth()/2 , mCamera.getHeight() - mAddButtonTextureRegion.getHeight());
+					this.setPosition(0 , mCamera.getHeight() - mAddButtonTextureRegion.getHeight());
 				} else {
 					this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
 				}
 				return true;
 			}
 		};
-		hud.registerTouchArea(addButton);
-		hud.attachChild(addButton);
+		hud.registerTouchArea(mAddButton);
+		hud.attachChild(mAddButton);
 		
-		final Sprite delButton = new Sprite(this.mDelButtonTextureRegion.getWidth()*2, mCamera.getHeight() - this.mDelButtonTextureRegion.getHeight(), this.mDelButtonTextureRegion, this.getVertexBufferObjectManager()) {
+		mDelButton = new Sprite(0, mCamera.getHeight() - this.mDelButtonTextureRegion.getHeight(), this.mDelButtonTextureRegion, this.getVertexBufferObjectManager()) {
 			
 			@Override
 			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-				if(!mHudEnabled)
-					return false;
-				
+								
 				if(pSceneTouchEvent.isActionUp() || pSceneTouchEvent.isActionCancel()|| pSceneTouchEvent.isActionOutside()) {
 					final float x = pSceneTouchEvent.getX() - this.getWidth() / 2;
 					final float y = pSceneTouchEvent.getY() - this.getHeight() / 2;
@@ -359,15 +365,15 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 					}
 					
 					//terugzetten van knop
-					this.setPosition(mDelButtonTextureRegion.getWidth()*2, mCamera.getHeight() - mDelButtonTextureRegion.getHeight());
+					this.setPosition(0, mCamera.getHeight() - mDelButtonTextureRegion.getHeight());
 				} else {
 					this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
 				}
 				return true;
 			}
 		};
-		hud.registerTouchArea(delButton);
-		hud.attachChild(delButton);
+		hud.registerTouchArea(mDelButton);
+		hud.attachChild(mDelButton);
 		
 //		mZoomCamera.setZoomFactor(1.5f);
 		
@@ -388,6 +394,8 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 		}
 		return null;
 	}
+	
+	
 	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -423,6 +431,50 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 		super.onPause();
 	}
 	
+	protected void setStatus(int status) {
+		this.status = status;
+		switch(status){
+		case STATUS_DEFAULT:
+			if(mCamera != null && mCamera.hasHUD()){
+				mCamera.setAutoScrollBackEnabled(true);
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						mCamera.getHUD().detachChildren();
+						mCamera.getHUD().clearTouchAreas();
+						mCamera.getHUD().attachChild(mAddButton);
+						mCamera.getHUD().registerTouchArea(mAddButton);
+					}
+				});
+			}
+			
+			break;
+		case STATUS_TOUCHING_TASK:
+			if(mCamera != null && mCamera.hasHUD()){
+				mCamera.setAutoScrollBackEnabled(false);
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						mCamera.getHUD().detachChildren();
+						mCamera.getHUD().clearTouchAreas();
+						mCamera.getHUD().attachChild(mDelButton);
+						mCamera.getHUD().registerTouchArea(mDelButton);
+					}
+				});
+			}
+			break;
+		case STATUS_DIALOG_SHOWED:
+			if(mCamera != null){
+				mCamera.setAutoScrollBackEnabled(false);
+			}
+		}
+		
+		
+	}
+	
+	protected int getStatus() {
+		return status;
+	}
 	
 	@Override
 	protected Dialog onCreateDialog(int id, final Bundle bundle) {
@@ -581,7 +633,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 				
 				@Override
 				public void run() {
-					task.animate(150); <====== (hier onder even gecomment zodat er tijd is voor animatie, maar app stopt na gedeelte van animatie)
+					task.animate(150); //<====== (hier onder even gecomment zodat er tijd is voor animatie, maar app stopt na gedeelte van animatie)
 					//mScene.unregisterTouchArea(task);
 					//mScene.detachChild(task);
 					
@@ -714,12 +766,12 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 			case TouchEvent.ACTION_DOWN:
 			case TouchEvent.ACTION_MOVE:
 				
-				mHudEnabled = false;
+				Visualtasks.this.setStatus(Visualtasks.STATUS_TOUCHING_SCENE);
 				break;
 			case TouchEvent.ACTION_UP:
 			case TouchEvent.ACTION_CANCEL:
 				
-				mHudEnabled = true;
+				Visualtasks.this.setStatus(Visualtasks.STATUS_DEFAULT);
 				break;
 			}
 			return true;
@@ -828,28 +880,32 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 				switch(pAreaTouchEvent.getAction()){
 				case TouchEvent.ACTION_DOWN:
 					mSelectedSprite = ts;
-					mSelectedSprite.setSelected(true);
-					mCamera.setAutoScrollBackEnabled(false);
-					mHudEnabled = false;
+					Visualtasks.this.setStatus(STATUS_TOUCHING_TASK);
+					
 				case TouchEvent.ACTION_OUTSIDE:
 					
-				
+					
 				case TouchEvent.ACTION_MOVE:
 					
 					break;
 				case TouchEvent.ACTION_CANCEL:
 				case TouchEvent.ACTION_UP:
 					if (mSelectedSprite != null){
-						mSelectedSprite.setSelected(false);
 //						mSelectedSprite = null;
-						
+						Visualtasks.this.setStatus(STATUS_DEFAULT);
+					
 					}
-					mCamera.setAutoScrollBackEnabled(true);
+					
 						
+				}
+				
+				if(mSelectedSprite != null){
+					mSelectedSprite.onAreaTouched(pAreaTouchEvent, mSelectedSprite, 0, 0);
+					Visualtasks.this.toastOnUIThread("y"+ mSelectedSprite.getBody().getPosition().y, Toast.LENGTH_SHORT);
 				}
 				this.mPinchZoomDetector.onTouchEvent(pAreaTouchEvent);
 				this.mHoldDetector.onTouchEvent(pAreaTouchEvent);
-				this.mScrollDetector.onTouchEvent(pAreaTouchEvent);
+//				this.mScrollDetector.onTouchEvent(pAreaTouchEvent);
 				this.mFlingGestureDetector.onTouchEvent(pAreaTouchEvent);
 			}
 			
@@ -969,13 +1025,20 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 				float velocityY) {
 //			Visualtasks.this.toastOnUIThread("fling", Toast.LENGTH_SHORT);
 			if (mSelectedSprite != null){
-				Visualtasks.this.toastOnUIThread("fling", Toast.LENGTH_SHORT);
+				
+
+				mSelectedSprite.setState(TaskSprite.STATE_SCROLLING);
+				mSelectedSprite.setSpeedY(velocityY);
+				Visualtasks.this.toastOnUIThread("fling"+ velocityY, Toast.LENGTH_SHORT);
 				//mSelectedSprite.getBody().setLinearVelocity(new Vector2(velocityX*0.005f, velocityY*0.005f));
 				
+
 			}
 		}
 		
 	}
+
+	
 
 	
 
