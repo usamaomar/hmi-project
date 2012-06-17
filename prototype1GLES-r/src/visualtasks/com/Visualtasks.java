@@ -99,6 +99,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 	private ITextureRegion mBackgroundTextureRegion;
 	private Scene mScene;
 	private TiledTextureRegion mTaskTextureRegion;
+	private TiledTextureRegion mCompletedTextureRegion;
 	// private Camera mCamera;
 	private TouchController mTouchController;
 	private TaskSpritesTouchListener mTaskSpriteController;
@@ -111,6 +112,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 	private final FixtureDef FIXTURE_DEF = PhysicsFactory.createFixtureDef(1, 0f, 0f);
 	
 	private BitmapTextureAtlas mBitmapTextureAtlas;
+	private BitmapTextureAtlas mBitmapTextureAtlas2;
 //	private HashMap<Long,Task> mTaskList;
 	// ===========================================================
 	// Getter & Setter
@@ -211,9 +213,10 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 			final Texture mDeleteTexture = new ResourceBitmapTexture(this.getTextureManager(), this.getResources(), R.drawable.delete);
 			
 			// create regions
-			this.mBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1500, 300, TextureOptions.BILINEAR);
+			this.mBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1800, 300, TextureOptions.BILINEAR);
+			this.mBitmapTextureAtlas2 = new BitmapTextureAtlas(this.getTextureManager(), 300, 300, TextureOptions.BILINEAR);
 			this.mBackgroundTextureRegion = TextureRegionFactory.extractFromTexture(mBackgroundTexture);
-			this.mTaskTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlas, this, "bubble_tiled.png", 0, 0, 5, 1);
+			this.mTaskTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlas, this, "bubble_tiled2.png", 0, 0, 6, 1);
 			this.mAddButtonTextureRegion = TextureRegionFactory.extractFromTexture(mAddTexture);
 			this.mDelButtonTextureRegion = TextureRegionFactory.extractFromTexture(mDeleteTexture);
 			//load textures
@@ -633,10 +636,10 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 				
 				@Override
 				public void run() {
-					task.animate(150); //<====== (hier onder even gecomment zodat er tijd is voor animatie, maar app stopt na gedeelte van animatie)
+					//task.animate(150); //<====== (hier onder even gecomment zodat er tijd is voor animatie, maar app stopt na gedeelte van animatie)
 
-					//mScene.unregisterTouchArea(task);
-					//mScene.detachChild(task);
+					mScene.unregisterTouchArea(task);
+					mScene.detachChild(task);
 					
 				}
 			});
@@ -644,35 +647,35 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 		}
 	}
 	
-	public void setComplete(TaskSprite old) {
-		TaskSprite completedSprite = new TaskSprite(this, old.getId(),  mScene, FIXTURE_DEF, mPhysicsWorld, mFont, mTaskTextureRegion, getVertexBufferObjectManager());
-		
-		completedSprite.setText(old.getText());
-		completedSprite.setX(old.getX());
-		completedSprite.setY(old.getY());
-		completedSprite.setScale(old.getScaleX());
-		deleteTask(old);
-		Long id = mDbHandler.addTask(old.getText(), old.getX(), old.getY(), completedSprite.STATUS_COMPLETED, 0f);
-		mIdToSprite.put(id, completedSprite);
-		
-		mScene.attachChild(completedSprite);
-		mScene.registerTouchArea(completedSprite);
-		
-	}
-	
+//	public void setComplete(TaskSprite old) {
+//		TaskSprite completedSprite = new TaskSprite(this, old.getId(),  mScene, FIXTURE_DEF, mPhysicsWorld, mFont, mCompletedTextureRegion, getVertexBufferObjectManager());
+//		
+//		completedSprite.setText(old.getText());
+//		completedSprite.setX(old.getX());
+//		completedSprite.setY(old.getY()+50);
+//		completedSprite.setScale(old.getScaleX());
+//		Long id = mDbHandler.addTask(old.getText(), old.getX(), old.getY(), completedSprite.STATUS_COMPLETED, 0f);
+//		mIdToSprite.put(id, completedSprite);
+//		
+//		deleteTask(old);
+//		mScene.attachChild(completedSprite);
+//		mScene.registerTouchArea(completedSprite);
+//		
+//	}
+//	
 	
 			
 		
-	class TouchController implements IOnSceneTouchListener,IScrollDetectorListener, IPinchZoomDetectorListener, IHoldDetectorListener, IFlingGestureListener{
+	class TouchController implements IOnSceneTouchListener,IScrollDetectorListener, /**IPinchZoomDetectorListener, IHoldDetectorListener,**/ IFlingGestureListener{
 
 		private int lastTouchId;
-		private ContinuousHoldDetector mHoldDetector;
-		private float mPinchZoomStartedCameraZoomFactor;
+//		private ContinuousHoldDetector mHoldDetector;
+//		private float mPinchZoomStartedCameraZoomFactor;
 		private Scene mScene;
 //		private PinchZoomDetector mPinchZoomDetector;
 //		private SurfaceScrollDetector mSurfaceScrollDetector;
 		private  FlingGestureDetector mGestureDetector;
-		private float zoomfac;
+//		private float zoomfac;
 		
 		
 		public TouchController(Scene pScene) {
@@ -709,49 +712,49 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 			//this.mPinchZoomDetector.setEnabled(false);
 		}
 		
-		@Override
-		public void onHold(HoldDetector pHoldDetector, long pHoldTimeMilliseconds, int pPointerID, float pHoldX, float pHoldY) {
-			
-		}
-
-		@Override
-		public void onHoldFinished(HoldDetector pHoldDetector, long pHoldTimeMilliseconds, int pPointerID, float pHoldX, float pHoldY) {
-			//verplaatst naar onHoldStarted(), vond ik logischer
-			/**pHoldDetector.setEnabled(false);
-			showPopUp(pHoldX, pHoldY);
-			pHoldDetector.setEnabled(true);**/
-		}
-
-		@Override
-		public void onHoldStarted(HoldDetector pHoldDetector, int pPointerID, float pHoldX, float pHoldY) {
-			pHoldDetector.setEnabled(false);
-			Visualtasks.this.onSceneHold(pHoldX, pHoldY);
-			pHoldDetector.setEnabled(true);
-		}
-		
-		
-		
-		@Override
-		public void onPinchZoom(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
-			//mZoomCamera.setZoomFactor(mPinchZoomStartedCameraZoomFactor * pZoomFactor);
-			zoomfac = mPinchZoomStartedCameraZoomFactor * pZoomFactor ;
-			if(1.0 < zoomfac && zoomfac < 2.0){
-				mCamera.setZoomFactor(zoomfac);
-			}
-		}
-
-		@Override
-		public void onPinchZoomFinished(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
-			//mZoomCamera.setZoomFactor(mPinchZoomStartedCameraZoomFactor * pZoomFactor);
-			if(1.0 < zoomfac && zoomfac < 2.0){
-				mCamera.setZoomFactor(zoomfac);
-			}
-		}
-
-		@Override
-		public void onPinchZoomStarted(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent) {
-			mPinchZoomStartedCameraZoomFactor = mCamera.getZoomFactor();
-		}
+//		@Override
+//		public void onHold(HoldDetector pHoldDetector, long pHoldTimeMilliseconds, int pPointerID, float pHoldX, float pHoldY) {
+//			
+//		}
+//
+//		@Override
+//		public void onHoldFinished(HoldDetector pHoldDetector, long pHoldTimeMilliseconds, int pPointerID, float pHoldX, float pHoldY) {
+//			//verplaatst naar onHoldStarted(), vond ik logischer
+//			/**pHoldDetector.setEnabled(false);
+//			showPopUp(pHoldX, pHoldY);
+//			pHoldDetector.setEnabled(true);**/
+//		}
+//
+//		@Override
+//		public void onHoldStarted(HoldDetector pHoldDetector, int pPointerID, float pHoldX, float pHoldY) {
+//			pHoldDetector.setEnabled(false);
+//			Visualtasks.this.onSceneHold(pHoldX, pHoldY);
+//			pHoldDetector.setEnabled(true);
+//		}
+//		
+//		
+//		
+//		@Override
+//		public void onPinchZoom(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
+//			//mZoomCamera.setZoomFactor(mPinchZoomStartedCameraZoomFactor * pZoomFactor);
+//			zoomfac = mPinchZoomStartedCameraZoomFactor * pZoomFactor ;
+//			if(1.0 < zoomfac && zoomfac < 2.0){
+//				mCamera.setZoomFactor(zoomfac);
+//			}
+//		}
+//
+//		@Override
+//		public void onPinchZoomFinished(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent, final float pZoomFactor) {
+//			//mZoomCamera.setZoomFactor(mPinchZoomStartedCameraZoomFactor * pZoomFactor);
+//			if(1.0 < zoomfac && zoomfac < 2.0){
+//				mCamera.setZoomFactor(zoomfac);
+//			}
+//		}
+//
+//		@Override
+//		public void onPinchZoomStarted(final PinchZoomDetector pPinchZoomDetector, final TouchEvent pTouchEvent) {
+//			mPinchZoomStartedCameraZoomFactor = mCamera.getZoomFactor();
+//		}
 		
 		@Override
 		public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
@@ -918,7 +921,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 				
 				if(mSelectedSprite != null){
 					mSelectedSprite.onAreaTouched(pAreaTouchEvent, mSelectedSprite, 0, 0);
-					Visualtasks.this.toastOnUIThread("y"+ mSelectedSprite.getBody().getPosition().y, Toast.LENGTH_SHORT);
+					//Visualtasks.this.toastOnUIThread("y"+ mSelectedSprite.getBody().getPosition().y, Toast.LENGTH_SHORT);
 				}
 				this.mPinchZoomDetector.onTouchEvent(pAreaTouchEvent);
 				this.mHoldDetector.onTouchEvent(pAreaTouchEvent);

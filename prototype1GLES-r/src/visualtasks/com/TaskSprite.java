@@ -45,7 +45,7 @@ public class TaskSprite extends AnimatedSprite implements IOnAreaTouchListener{
 	private VertexBufferObjectManager mVBO;
 	private float velocity;
 	private Visualtasks vt;
-	private boolean notYetCompleted = true;
+	private boolean notYetCompleted = false;
 
 	
 	private int state = 0;
@@ -303,15 +303,16 @@ public class TaskSprite extends AnimatedSprite implements IOnAreaTouchListener{
 			if(this.getAlpha() != 1f)
 				this.setAlpha(1f);
 			notYetCompleted = true;
+			this.setCurrentTileIndex(0);
 
 			break;
 		case STATUS_COMPLETED:
-			this.setAlpha(0.3f);
+			this.setAlpha(0.7f);
 			if(notYetCompleted) {
-				//vt.setComplete(this);
 				vt.toastOnUIThread(getText() + " completed", 0);
 				notYetCompleted = false;
 			}
+			this.setCurrentTileIndex(5);
 			break;
 		}
 		//check if new body needed
