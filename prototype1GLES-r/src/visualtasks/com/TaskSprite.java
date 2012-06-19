@@ -323,15 +323,47 @@ public class TaskSprite extends AnimatedSprite implements IOnAreaTouchListener{
 				break;
 			case STATE_TOUCHDOWN:
 				if((this.getY()- Visualtasks.BORDER)< 10f && body.isActive()) {
-					body.setActive(false);
+//					body.setActive(false);
 //					vt.toastOnUIThread(this.getY() + " test", 0);
 				}else if(!body.isActive()){
-					this. body.setActive(true);
+//					this. body.setActive(true);
 				}
 				
 				break;
 			}
+			
+			//check position for borders
+			SmoothScrollCamera camera = vt.getCamera();
+			if(this.getX() < camera.getBoundsXMin()) {
+				this.setX(camera.getBoundsXMin()+this.getWidthScaled()/2f);
+				this.speedX = 0;
+			}else if(this.getX() > camera.getBoundsXMax()){
+				this.setX(camera.getBoundsXMax()-this.getWidthScaled()/2f);
+				this.speedX = 0;
+			}
+			if(this.getY() < camera.getBoundsYMin()) {
+				this.setY(camera.getBoundsYMin()+this.getHeightScaled()/2f);
+				this.speedY = 0;
+			}else if(this.getY() > camera.getBoundsYMax()){
+				this.setY(camera.getBoundsYMax()-this.getHeightScaled()/2f);
+				this.speedY = 0;
+			}
+			
+			if(this.getState() != STATE_TOUCHDOWN){
+				if(this.getStatus() == STATUS_ACTIVE && this.getY() < Visualtasks.BORDER + this.getHeightScaled()/2f){
+					this.setY(Visualtasks.BORDER + this.getHeightScaled()/2f);
+					this.speedY = 0;
+				} else if(this.getStatus() == STATUS_COMPLETED && this.getY() > Visualtasks.BORDER - this.getHeightScaled()/2f){
+					this.setY(Visualtasks.BORDER - this.getHeightScaled()/2f);
+					this.speedY = 0;
+				}
+			}
 		}
+		
+		// check position, change if necesarry
+		
+		
+		
 		
 		//set alpha
 		
