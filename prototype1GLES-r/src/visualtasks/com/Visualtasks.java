@@ -342,12 +342,12 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 						});
 				}**/
 				if(pSceneTouchEvent.isActionUp() || pSceneTouchEvent.isActionCancel()|| pSceneTouchEvent.isActionOutside()) {
-					this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
+					//this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
 					final float[] coord = mCamera.getSceneCoordinatesFromCameraSceneCoordinates(this.getSceneCenterCoordinates());
 					final Bundle bundle = new Bundle();
 					
 					bundle.putFloat(KEY_TASK_X, coord[0]);
-					bundle.putFloat(KEY_TASK_Y, coord[1]);
+					bundle.putFloat(KEY_TASK_Y, coord[1] - 150);
 					runOnUiThread(new Runnable(){
 						@Override
 						public void run() {
@@ -357,9 +357,9 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 					
 					
 					//terugzetten van knop
-					this.setPosition(mCamera.getWidth()/2 - 2*mAddButtonTextureRegion.getWidth() , mCamera.getHeight() - mAddButtonTextureRegion.getHeight());
+					//this.setPosition(mCamera.getWidth()/2 - 2*mAddButtonTextureRegion.getWidth() , mCamera.getHeight() - mAddButtonTextureRegion.getHeight());
 				} else {
-					this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
+					//this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
 				}
 				return true;
 			}
@@ -375,11 +375,11 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
 								
 				if(pSceneTouchEvent.isActionUp() || pSceneTouchEvent.isActionCancel()|| pSceneTouchEvent.isActionOutside()) {
-					final float x = pSceneTouchEvent.getX() - this.getWidth() / 2;
-					final float y = pSceneTouchEvent.getY() - this.getHeight() / 2;
-					
-					this.setPosition(x,y );
-					
+//					final float x = pSceneTouchEvent.getX() - this.getWidth() / 2;
+//					final float y = pSceneTouchEvent.getY() - this.getHeight() / 2;
+//					
+//					this.setPosition(x,y );
+//					
 					//check voor collision en verwijderen van bubble als dat het geval is.
 					
 					TaskSprite spriteToDelete = Visualtasks.this.getTaskSpriteAtPosition(mCamera.getSceneCoordinatesFromCameraSceneCoordinates(
@@ -387,12 +387,13 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 							
 					if (spriteToDelete != null){
 						Visualtasks.this.deleteTask(spriteToDelete);
+						Visualtasks.this.toastOnUIThread(spriteToDelete.getText() +  "deleted", Toast.LENGTH_SHORT);
 					}
 					
 					//terugzetten van knop
-					this.setPosition(mCamera.getWidth()/2 - mDelButtonTextureRegion.getWidth()/2, mCamera.getHeight() - mDelButtonTextureRegion.getHeight());
+					//this.setPosition(mCamera.getWidth()/2 - mDelButtonTextureRegion.getWidth()/2, mCamera.getHeight() - mDelButtonTextureRegion.getHeight());
 				} else {
-					this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
+					//this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
 				}
 				return true;
 			}
@@ -416,12 +417,12 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 						});
 				}**/
 				if(pSceneTouchEvent.isActionUp() || pSceneTouchEvent.isActionCancel()|| pSceneTouchEvent.isActionOutside()) {
-					this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
+					//this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
 					final float[] coord = mCamera.getSceneCoordinatesFromCameraSceneCoordinates(this.getSceneCenterCoordinates());
 					final Bundle bundle = new Bundle();
 					
 					bundle.putFloat(KEY_TASK_X, coord[0]);
-					bundle.putFloat(KEY_TASK_Y, coord[1]);
+					bundle.putFloat(KEY_TASK_Y, coord[1] - 150);
 					runOnUiThread(new Runnable(){
 						@Override
 						public void run() {
@@ -431,9 +432,9 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 					
 					
 					//terugzetten van knop
-					this.setPosition(mCamera.getWidth()/2 + mDarkAddButtonTextureRegion.getWidth(), mCamera.getHeight() - mDarkAddButtonTextureRegion.getHeight());
+					//this.setPosition(mCamera.getWidth()/2 + mDarkAddButtonTextureRegion.getWidth(), mCamera.getHeight() - mDarkAddButtonTextureRegion.getHeight());
 				} else {
-					this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
+					//this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
 				}
 				return true;
 			}
