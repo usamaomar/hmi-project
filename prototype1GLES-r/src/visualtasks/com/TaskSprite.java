@@ -76,7 +76,7 @@ public class TaskSprite extends AnimatedSprite implements  Comparable<TaskSprite
 		this.mScene = pScene;
 		this.mFont = pFont;
 		createBody();
-		velocity = this.getScaleX()*this.getScaleX();
+		velocity = this.getScaleX()*this.getScaleX() * 2f;
 		setScale(SCALE_DEFAULT);
 //		mScene.registerUpdateHandler(this);
 		body.setFixedRotation(true);
@@ -342,12 +342,7 @@ public class TaskSprite extends AnimatedSprite implements  Comparable<TaskSprite
 				}
 				break;
 			case STATE_TOUCHDOWN:
-				if((this.getY()- Visualtasks.BORDER)< 10f && body.isActive()) {
-//					body.setActive(false);
-//					vt.toastOnUIThread(this.getY() + " test", 0);
-				}else if(!body.isActive()){
-//					this. body.setActive(true);
-				}
+				this.getBody().setLinearVelocity(0, 0);
 				
 				break;
 			}
