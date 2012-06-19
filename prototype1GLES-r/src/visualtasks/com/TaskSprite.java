@@ -16,9 +16,10 @@ import org.andengine.opengl.font.Font;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.util.HorizontalAlign;
+
 import android.view.MotionEvent;
 import brr.AndroidStrategy.MapControl.SmoothScrollCamera;
-import com.badlogic.gdx.math.Vector2;
+
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
@@ -45,8 +46,11 @@ public class TaskSprite extends AnimatedSprite implements IOnAreaTouchListener{
 	private VertexBufferObjectManager mVBO;
 	private float velocity;
 	private Visualtasks vt;
-	private boolean notYetCompleted = false;
 
+	private int mStatus = 0;
+	public static final int STATUS_ACTIVE = 0;
+	public static final int STATUS_COMPLETED = STATUS_ACTIVE + 1;
+	public static final int STATUS_DELETED = STATUS_COMPLETED + 1;
 	
 	private int state = 0;
 	public final static int STATE_DEFAULT = 0;
@@ -58,8 +62,11 @@ public class TaskSprite extends AnimatedSprite implements IOnAreaTouchListener{
 	private float speedY;
 	private float lastX;
 	private float lastY;
-	private float startY;
-	
+		
+	private float maxY;
+	private float minY;
+	private float maxX;
+	private float minX;
 	public TaskSprite(Visualtasks vt, long id, Scene pScene, FixtureDef fixtureDef, PhysicsWorld physicsWorld, Font pFont, TiledTextureRegion pTextureRegion,	VertexBufferObjectManager vBOM) {
 		super(120,120,pTextureRegion, vBOM);
 		mVBO =  vBOM;
@@ -77,9 +84,7 @@ public class TaskSprite extends AnimatedSprite implements IOnAreaTouchListener{
 		
 	}
 
-	public static final int STATUS_ACTIVE = 0;
-	public static final int STATUS_COMPLETED = STATUS_ACTIVE + 1;
-	public static final int STATUS_DELETED = STATUS_COMPLETED + 1;
+	
 	
 	public void setDeleted(){
 		this.removeBody();
@@ -92,27 +97,30 @@ public class TaskSprite extends AnimatedSprite implements IOnAreaTouchListener{
 		
 		
 		MotionEvent evt = touchEvent.getMotionEvent();
-		
-		if(evt.getAction() == MotionEvent.ACTION_DOWN)
-		{
+		switch(touchEvent.getAction()){
+		case TouchEvent.ACTION_DOWN:
+			speedX = 0; speedY = 0;
 			this.setState(STATE_TOUCHDOWN);
 			this.lastX = evt.getRawX();
-			this.lastY = evt.getRawY();	
+			this.lastY = evt.getRawY();
+			break;
+		case TouchEvent.ACTION_MOVE:
 			
-		}
-		if(this.getState() == TaskSprite.STATE_TOUCHDOWN)
-		{
 			
 			this.setX(this.getX() - (lastX - evt.getRawX()));
 			this.setY(this.getY() - (lastY - evt.getRawY()) );
 			this.lastX = evt.getRawX();
-			this.lastY = evt.getRawY();	
+			this.lastY = evt.getRawY();
+			break;
+		case TouchEvent.ACTION_CANCEL:
+		case TouchEvent.ACTION_OUTSIDE:
+		case TouchEvent.ACTION_UP:
+			if(speedX != 0 || speedY != 0){
+				this.setState(TaskSprite.STATE_SCROLLING);
+			}
+			else
+				this.setState(TaskSprite.STATE_DEFAULT);
 		}
-		if(evt.getAction() == MotionEvent.ACTION_UP)
-		{
-			this.setState(TaskSprite.STATE_SCROLLING);
-		}
-		
 		
 		return false;
 	}
@@ -120,16 +128,16 @@ public class TaskSprite extends AnimatedSprite implements IOnAreaTouchListener{
 		this.state = state;
 		switch(state){
 		case STATE_DEFAULT:
-			this.getBody().setLinearVelocity(new Vector2(0,0));
+//			this.getBody().setLinearVelocity(new Vector2(0,0));
 			this.speedY = 0;
 			this.speedX = 0;
 			break;
 		case STATE_SCROLLING:
 			break;
 		case STATE_TOUCHDOWN:
-			this.getBody().setLinearVelocity(new Vector2(0,0));
-			this.speedY = 0;
-			this.speedX = 0;
+//			this.getBody().setLinearVelocity(new Vector2(0,0));
+//			this.speedY = 0;
+//			this.speedX = 0;
 			break;
 		}
 	}
@@ -158,10 +166,15 @@ public class TaskSprite extends AnimatedSprite implements IOnAreaTouchListener{
 	}
 	@Override
 	public void setY(float pY) {
+//		if(this.getStatus() != STATUS_DELETED){
+//			if (this.getY() > Visualtasks.BORDER) this.setStatus(STATUS_ACTIVE);
+//			else if (this.getY() < Visualtasks.BORDER) this.setStatus(STATUS_COMPLETED);
+//		}
 		if (this.getBody() == null){
 			super.setY(pY);
 		} else{
 			this.getBody().setTransform(this.getX()/PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT,pY/ PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT, 0);
+//			super.setY(pY);
 		}
 	}
 	
@@ -233,16 +246,37 @@ public class TaskSprite extends AnimatedSprite implements IOnAreaTouchListener{
 	}
 	
 	public int getStatus(){
-		int status = 2;
+//		int status = 2;
+//		
+//		if (deleted) status = STATUS_DELETED;
+//		else if (this.getY() > Visualtasks.BORDER) status = STATUS_ACTIVE;
+//		else if (this.getY() < Visualtasks.BORDER) status = STATUS_COMPLETED;
 		
-		if (deleted) status = STATUS_DELETED;
-		else if (this.getY() > Visualtasks.BORDER) status = STATUS_ACTIVE;
-		else if (this.getY() < Visualtasks.BORDER) status = STATUS_COMPLETED;
-		
-		return status;
+		return mStatus;
 	}
 	
-	
+	public void setStatus(int pStatus) {
+		switch(pStatus){
+		case STATUS_DELETED:
+			this.removeBody();
+			break;
+		case STATUS_ACTIVE:
+			if(mStatus == TaskSprite.STATUS_COMPLETED){
+				this.setAlpha(1f);
+			}
+			break;
+		case STATUS_COMPLETED:
+			if(mStatus == TaskSprite.STATUS_ACTIVE){
+				this.setAlpha(0.3f);
+				vt.toastOnUIThread(getText() + " completed", 0);
+				
+			}
+		
+		
+			break;
+		}
+		this.mStatus = pStatus;
+	}
 	
 	@Override
 	protected void onManagedUpdate(float pSecondsElapsed) {
@@ -252,32 +286,36 @@ public class TaskSprite extends AnimatedSprite implements IOnAreaTouchListener{
 //			velocity = this.getScaleX()*this.getScaleX();
 			bodyNeedsUpdate = false;
 		}
-		switch(this.getStatus()){
-		case STATUS_DELETED:
-			this.removeBody();
-			break;
-		case STATUS_ACTIVE:
-		case STATUS_COMPLETED:
-			
-		}
+		
+//		if (deleted) status = STATUS_DELETED;
+//		else if (this.getY() > Visualtasks.BORDER) status = STATUS_ACTIVE;
+//		else if (this.getY() < Visualtasks.BORDER) status = STATUS_COMPLETED;
 		
 		if(this.getStatus() != STATUS_DELETED){
+			if (this.getY() > Visualtasks.BORDER) this.setStatus(STATUS_ACTIVE);
+			else if (this.getY() < Visualtasks.BORDER) this.setStatus(STATUS_COMPLETED);
+			
 			switch(this.getState()){
 			case STATE_DEFAULT:
 //				this.getBody().setLinearVelocity(new Vector2(0,0));
 				
 				break;
 			case STATE_SCROLLING:
-				if(this.speedY == 0 ||this.getBody().getLinearVelocity().y == 0){
+				final SmoothScrollCamera camera = vt.getCamera();
+				if(this.speedY == 0 && this.speedX == 0 
+						|| this.getY() >= camera.getBoundsYMax() - this.getHeightScaled()
+//						|| this.getY() > camera.getYMax() - this.getHeightScaled()
+						){
 			  		this.setState(STATE_DEFAULT);
-					this.getBody().setLinearVelocity(0, 0);
+//					this.getBody().setLinearVelocity(0, 0);
 					speedY = 0;
+					speedX = 0;
 				}else{
-					this.setX(this.getX() - speedX * pSecondsElapsed);
+					this.setX(this.getX() + speedX * pSecondsElapsed);
 					this.setY(this.getY() + speedY * pSecondsElapsed);
 					
-					this.speedY *=  (1.0f - 2f * pSecondsElapsed);
-					this.speedX *= (1.0f - 2f * pSecondsElapsed);
+					this.speedY *=  (1.0f - 5f * pSecondsElapsed);
+					this.speedX *= (1.0f - 8f * pSecondsElapsed);
 					
 					if(speedY < 10 && speedY > -10) speedY = 0;
 					if(speedX < 10 && speedX > -10) speedX = 0;
@@ -287,8 +325,9 @@ public class TaskSprite extends AnimatedSprite implements IOnAreaTouchListener{
 			case STATE_TOUCHDOWN:
 				if((this.getY()- Visualtasks.BORDER)< 10f && body.isActive()) {
 					body.setActive(false);
+//					vt.toastOnUIThread(this.getY() + " test", 0);
 				}else if(!body.isActive()){
-					body.setActive(true);
+					this. body.setActive(true);
 				}
 				
 				break;
@@ -296,25 +335,8 @@ public class TaskSprite extends AnimatedSprite implements IOnAreaTouchListener{
 		}
 		
 		//set alpha
-		switch(this.getStatus()){
-		case STATUS_DELETED:
-			break;
-		case STATUS_ACTIVE:
-			if(this.getAlpha() != 1f)
-				this.setAlpha(1f);
-			notYetCompleted = true;
-			this.setCurrentTileIndex(0);
+		
 
-			break;
-		case STATUS_COMPLETED:
-			this.setAlpha(0.7f);
-			if(notYetCompleted) {
-				vt.toastOnUIThread(getText() + " completed", 0);
-				notYetCompleted = false;
-			}
-			this.setCurrentTileIndex(5);
-			break;
-		}
 		//check if new body needed
 		super.onManagedUpdate(pSecondsElapsed);
 	}
@@ -331,6 +353,9 @@ public class TaskSprite extends AnimatedSprite implements IOnAreaTouchListener{
 	
 	public void setSpeedY(float speedY){
 		this.speedY = speedY;
+	}
+	public void setSpeedX(float speedX) {
+		this.speedX = speedX;
 	}
 	
 }

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.andengine.engine.camera.Camera;
 import org.andengine.engine.camera.SmoothCamera;
 import org.andengine.engine.camera.hud.HUD;
 import org.andengine.engine.handler.IUpdateHandler;
@@ -272,7 +273,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 		/**
 		 * Gravity wordt hier gezet, moet op 0 gezet worden wanneer er een bubbel collide met border body (body's zweven dan nog wel even verder door impuls?)
 		 */
-		mPhysicsWorld.setGravity(new Vector2(0, -0.1f));
+//		mPhysicsWorld.setGravity(new Vector2(0, -0.1f));
 		
 		final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
 		final Rectangle ground = new Rectangle(0, BACKGROUND_HEIGHT - 2, mCamera.getWidth(), 2, vertexBufferObjectManager);
@@ -892,6 +893,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 				float velocityY) {
 //			this.mMapScroller.setSpeedX(velocityX * .8f);
 			mCamera.setSpeedY(velocityY * .8f);
+//			mCamera.setSpeedX(velocityX * .8f);
 		}
 		
 	}
@@ -979,8 +981,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 				
 				if(mSelectedSprite != null){
 					mSelectedSprite.onAreaTouched(pAreaTouchEvent, mSelectedSprite, 0, 0);
-					//Visualtasks.this.toastOnUIThread("y"+ mSelectedSprite.getBody().getPosition().y, Toast.LENGTH_SHORT);
-				}
+			}
 				this.mPinchZoomDetector.onTouchEvent(pAreaTouchEvent);
 				this.mHoldDetector.onTouchEvent(pAreaTouchEvent);
 //				this.mScrollDetector.onTouchEvent(pAreaTouchEvent);
@@ -1107,13 +1108,18 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 
 				mSelectedSprite.setState(TaskSprite.STATE_SCROLLING);
 				mSelectedSprite.setSpeedY(velocityY);
-				Visualtasks.this.toastOnUIThread("fling"+ velocityY, Toast.LENGTH_SHORT);
+				mSelectedSprite.setSpeedX(velocityX);
+//				Visualtasks.this.toastOnUIThread("fling"+ velocityY, Toast.LENGTH_SHORT);
 				//mSelectedSprite.getBody().setLinearVelocity(new Vector2(velocityX*0.005f, velocityY*0.005f));
 				
 
 			}
 		}
 		
+	}
+
+	public SmoothScrollCamera getCamera() {
+		return this.mCamera;
 	}
 
 	
