@@ -2,10 +2,12 @@ package visualtasks.com;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
 import org.andengine.engine.camera.hud.HUD;
+import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.FillResolutionPolicy;
@@ -41,6 +43,9 @@ import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.ui.dialog.StringInputDialogBuilder;
+import org.andengine.util.adt.list.CircularList;
+import org.andengine.util.adt.list.SmartList;
+import org.andengine.util.adt.list.SortedList;
 import org.andengine.util.call.Callback;
 
 import android.app.Dialog;
@@ -64,12 +69,11 @@ import brr.AndroidStrategy.MapControl.FlingGestureDetector.IFlingGestureListener
 import brr.AndroidStrategy.MapControl.SmoothScrollCamera;
 
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 
 import data.TaskDbHandler;
 
-public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissListener{
+public class Visualtasks extends SimpleBaseGameActivity  implements IUpdateHandler, OnDismissListener{
 	// ===========================================================
 	// Constants
 	// ===========================================================
@@ -93,7 +97,8 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 	public static final int STATUS_DIALOG_SHOWED = 2;
 	public static final int STATUS_TOUCHING_SCENE = 3;
 	private TaskDbHandler mDbHandler;
-	private HashMap<Long, TaskSprite> mIdToSprite;
+	private HashMap<Long,TaskSprite> mIdToSprite;
+	private ArrayList<TaskSprite> mTasksSorted;
 	private Font mFont;
 	private ITextureRegion mBackgroundTextureRegion;
 	private Scene mScene;
@@ -112,6 +117,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 	protected PhysicsWorld mPhysicsWorld;
 	private final FixtureDef FIXTURE_DEF = PhysicsFactory.createFixtureDef(1, 0f, 0f);
 	private boolean darkTask;
+	private boolean mHasTaskAtBorder;
 	
 	private BitmapTextureAtlas mBitmapTextureAtlas;
 	private BitmapTextureAtlas mBitmapDarkTextureAtlas;
@@ -128,6 +134,9 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 	@Override
 	protected void onCreate(Bundle pSavedInstanceState) {
 		mDbHandler = new TaskDbHandler(this);
+				
+		mTasksSorted = new ArrayList<TaskSprite>();
+		
 		mIdToSprite = new HashMap<Long, TaskSprite>();
 		super.onCreate(pSavedInstanceState);
 	}
@@ -192,13 +201,44 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 		dialog.setOnDismissListener(this);
 		super.onPrepareDialog(id, dialog);
 	}
+	public boolean hasTaskAtBorder() {
+		return mHasTaskAtBorder;
+	}
 	
 	
 	
+	@Override
+	public void onUpdate(float arg0) {
+		
+		if(mTasksSorted != null && !mTasksSorted.isEmpty()){
+			Collections.sort(mTasksSorted);
+			final TaskSprite firstTask = mTasksSorted.get(0);
+			
+			if(firstTask != null  && firstTask.getStatus() == TaskSprite.STATUS_ACTIVE){
+				mHasTaskAtBorder= firstTask.isFirstActiveTask();
+//					{ 
+////						mPhysicsWorld.setGravity(new Vector2(0, 0));
+//						
+//					 	Visualtasks.this.toastOnUIThread(firstTask.getText() +  " toptask", Toast.LENGTH_SHORT);
+//					}
+//				else {
+////					mPhysicsWorld.setGravity(new Vector2(0, -0.03f));
+//				}
+				
+			}
+			else {
+				mHasTaskAtBorder = false;
+				
+			}
+			
+		}
+	}
 	
-	
-	
-	
+	@Override
+	public void reset() {
+		// TODO Auto-generated method stub
+		
+	}
 	
 	@Override
 	protected void onCreateResources() {
@@ -267,7 +307,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 		this.mScene.setOnAreaTouchTraversalFrontToBack();
 		
 		this.mScene.registerUpdateHandler(mCamera);
-		
+		this.mScene.registerUpdateHandler(this);
 		//bg stuff
 //		final ParallaxBackground parallaxBackground = new ParallaxBackground(0, 0, 0);
 //		parallaxBackground.attachParallaxEntity(new ParallaxEntity(0, new Sprite(0, 0, this.mBackgroundTextureRegion, this.getVertexBufferObjectManager())));
@@ -283,7 +323,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 		/**
 		 * Gravity wordt hier gezet, moet op 0 gezet worden wanneer er een bubbel collide met border body (body's zweven dan nog wel even verder door impuls?)
 		 */
-		mPhysicsWorld.setGravity(new Vector2(0, -0.01f));
+//		mPhysicsWorld.setGravity(new Vector2(0, -0.01f));
 		
 		final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
 		final Rectangle ground = new Rectangle(0, BACKGROUND_HEIGHT - 2, mCamera.getWidth(), 2, vertexBufferObjectManager);
@@ -691,7 +731,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 			taskSprite.setX(pX);
 			taskSprite.setY(pY);
 			mIdToSprite.put(id, taskSprite);
-			
+			mTasksSorted.add(taskSprite);
 			mScene.attachChild(taskSprite);
 			mScene.registerTouchArea(taskSprite);
 			return taskSprite;
@@ -707,6 +747,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 		long id = task.getId();
 		if(mIdToSprite.containsKey(id)){
 			mIdToSprite.remove(id);
+			mTasksSorted.remove(task);
 			mDbHandler.deleteTask(id);
 			runOnUpdateThread(new Runnable() {
 				
