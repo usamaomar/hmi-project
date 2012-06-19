@@ -290,16 +290,16 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 		final Rectangle roof = new Rectangle(0, 0, mCamera.getWidth(), 2, vertexBufferObjectManager);
 		final Rectangle left = new Rectangle(0, 0, 2, BACKGROUND_HEIGHT, vertexBufferObjectManager);
 		final Rectangle right = new Rectangle(mCamera.getWidth() - 2, 0, 2, BACKGROUND_HEIGHT, vertexBufferObjectManager);
-		final Rectangle border = new Rectangle(0, BORDER, mCamera.getWidth(), 1, vertexBufferObjectManager);
+//		final Rectangle border = new Rectangle(0, BORDER, mCamera.getWidth(), 1, vertexBufferObjectManager);
 
 		final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 0f, 0f);
-		PhysicsFactory.createBoxBody(this.mPhysicsWorld, ground, BodyType.StaticBody, wallFixtureDef);
-		PhysicsFactory.createBoxBody(this.mPhysicsWorld, roof, BodyType.StaticBody, wallFixtureDef);
-		PhysicsFactory.createBoxBody(this.mPhysicsWorld, left, BodyType.StaticBody, wallFixtureDef);
-		PhysicsFactory.createBoxBody(this.mPhysicsWorld, right, BodyType.StaticBody, wallFixtureDef);
-		PhysicsFactory.createBoxBody(this.mPhysicsWorld, border, BodyType.StaticBody, wallFixtureDef);
+//		PhysicsFactory.createBoxBody(this.mPhysicsWorld, ground, BodyType.StaticBody, wallFixtureDef);
+//		PhysicsFactory.createBoxBody(this.mPhysicsWorld, roof, BodyType.StaticBody, wallFixtureDef);
+//		PhysicsFactory.createBoxBody(this.mPhysicsWorld, left, BodyType.StaticBody, wallFixtureDef);
+//		PhysicsFactory.createBoxBody(this.mPhysicsWorld, right, BodyType.StaticBody, wallFixtureDef);
+//		PhysicsFactory.createBoxBody(this.mPhysicsWorld, border, BodyType.StaticBody, wallFixtureDef);
 
-		border.setVisible(false);
+//		border.setVisible(false);
 		
 //		this.mScene.attachChild(ground);
 //		this.mScene.attachChild(roof);
