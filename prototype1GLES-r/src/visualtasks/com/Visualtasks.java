@@ -76,7 +76,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 
 	private static final float CAMERA_ZOOM_FACTOR = 1f;
 	private static final int BACKGROUND_HEIGHT = 2400;
-	public static final float BORDER = 1000f;
+	public static final float BORDER = 1005f;
 	public static final float START_HEIGHT = 800;
 	
 	public static final int DIALOG_NEW_TASK_ID = 0;
@@ -283,7 +283,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 		/**
 		 * Gravity wordt hier gezet, moet op 0 gezet worden wanneer er een bubbel collide met border body (body's zweven dan nog wel even verder door impuls?)
 		 */
-//		mPhysicsWorld.setGravity(new Vector2(0, -0.1f));
+		mPhysicsWorld.setGravity(new Vector2(0, -0.01f));
 		
 		final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
 		final Rectangle ground = new Rectangle(0, BACKGROUND_HEIGHT - 2, mCamera.getWidth(), 2, vertexBufferObjectManager);
@@ -375,11 +375,11 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
 								
 				if(pSceneTouchEvent.isActionUp() || pSceneTouchEvent.isActionCancel()|| pSceneTouchEvent.isActionOutside()) {
-//					final float x = pSceneTouchEvent.getX() - this.getWidth() / 2;
-//					final float y = pSceneTouchEvent.getY() - this.getHeight() / 2;
-//					
-//					this.setPosition(x,y );
-//					
+					final float x = pSceneTouchEvent.getX() - this.getWidth() / 2;
+					final float y = pSceneTouchEvent.getY() - this.getHeight() / 2;
+					
+					this.setPosition(x,y );
+					
 					//check voor collision en verwijderen van bubble als dat het geval is.
 					
 					TaskSprite spriteToDelete = Visualtasks.this.getTaskSpriteAtPosition(mCamera.getSceneCoordinatesFromCameraSceneCoordinates(
@@ -387,13 +387,13 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 							
 					if (spriteToDelete != null){
 						Visualtasks.this.deleteTask(spriteToDelete);
-						Visualtasks.this.toastOnUIThread(spriteToDelete.getText() +  "deleted", Toast.LENGTH_SHORT);
+						Visualtasks.this.toastOnUIThread(spriteToDelete.getText() +  " deleted", Toast.LENGTH_SHORT);
 					}
 					
 					//terugzetten van knop
-					//this.setPosition(mCamera.getWidth()/2 - mDelButtonTextureRegion.getWidth()/2, mCamera.getHeight() - mDelButtonTextureRegion.getHeight());
+					this.setPosition(mCamera.getWidth()/2 - mDelButtonTextureRegion.getWidth()/2, mCamera.getHeight() - mDelButtonTextureRegion.getHeight());
 				} else {
-					//this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
+					this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
 				}
 				return true;
 			}
@@ -511,6 +511,8 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 					public void run() {
 						mCamera.getHUD().detachChildren();
 						mCamera.getHUD().clearTouchAreas();
+						mCamera.getHUD().attachChild(mDelButton);
+						mCamera.getHUD().registerTouchArea(mDelButton);
 						mCamera.getHUD().attachChild(mAddButton);
 						mCamera.getHUD().registerTouchArea(mAddButton);
 						mCamera.getHUD().attachChild(mDarkAddButton);
@@ -907,7 +909,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 		public void onFling(TouchEvent pSceneTouchEvent, float velocityX,
 				float velocityY) {
 //			this.mMapScroller.setSpeedX(velocityX * .8f);
-			mCamera.setSpeedY(velocityY * .8f);
+			mCamera.setSpeedY(velocityY * .4f);
 //			mCamera.setSpeedX(velocityX * .8f);
 		}
 		
