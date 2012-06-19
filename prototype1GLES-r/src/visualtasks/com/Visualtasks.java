@@ -5,10 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.andengine.engine.camera.Camera;
-import org.andengine.engine.camera.SmoothCamera;
 import org.andengine.engine.camera.hud.HUD;
-import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.FillResolutionPolicy;
@@ -17,6 +14,7 @@ import org.andengine.entity.scene.IOnAreaTouchListener;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.ITouchArea;
 import org.andengine.entity.scene.Scene;
+import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
@@ -105,11 +103,11 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 	private TouchController mTouchController;
 	private TaskSpritesTouchListener mTaskSpriteController;
 	private SmoothScrollCamera mCamera;
-	private ITextureRegion mAddButtonTextureRegion;
-	private ITextureRegion mAddDarkButtonTextureRegion;
+	private TiledTextureRegion mAddButtonTextureRegion;
+	private TiledTextureRegion mDarkAddButtonTextureRegion;
 	private ITextureRegion mDelButtonTextureRegion;
-	private Sprite mAddButton;
-	private Sprite mAddDarkButton;
+	private AnimatedSprite mAddButton;
+	private AnimatedSprite mDarkAddButton;
 	private Sprite mDelButton;
 	protected PhysicsWorld mPhysicsWorld;
 	private final FixtureDef FIXTURE_DEF = PhysicsFactory.createFixtureDef(1, 0f, 0f);
@@ -117,6 +115,8 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 	
 	private BitmapTextureAtlas mBitmapTextureAtlas;
 	private BitmapTextureAtlas mBitmapDarkTextureAtlas;
+	private BitmapTextureAtlas mBitmapAddButtonTextureAtlas;
+	private BitmapTextureAtlas mBitmapDarkAddButtonTextureAtlas;
 //	private HashMap<Long,Task> mTaskList;
 	// ===========================================================
 	// Getter & Setter
@@ -213,8 +213,8 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 			// create textures
 			final Texture mBackgroundTexture = new ResourceBitmapTexture(this.getTextureManager(), this.getResources(), R.drawable.background);
 			//final Texture mTaskTexture = new ResourceBitmapTexture(this.getTextureManager(), this.getResources(), R.drawable.bubble_tiled);
-			final Texture mAddTexture = new ResourceBitmapTexture(this.getTextureManager(), this.getResources(), R.drawable.add);
-			final Texture mAddDarkTexture = new ResourceBitmapTexture(this.getTextureManager(), this.getResources(), R.drawable.add_dark);
+			//final Texture mAddTexture = new ResourceBitmapTexture(this.getTextureManager(), this.getResources(), R.drawable.add);
+			//final Texture mAddDarkTexture = new ResourceBitmapTexture(this.getTextureManager(), this.getResources(), R.drawable.add_dark);
 			final Texture mDeleteTexture = new ResourceBitmapTexture(this.getTextureManager(), this.getResources(), R.drawable.delete);
 			
 			// create regions
@@ -223,17 +223,27 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 			this.mBackgroundTextureRegion = TextureRegionFactory.extractFromTexture(mBackgroundTexture);
 			this.mTaskTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlas, this, "bubble_tiled2.png", 0, 0, 6, 1);
 			this.mDarkTaskTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapDarkTextureAtlas, this, "bubble_tiled_dark.png", 0, 0, 6, 1);
-			this.mAddButtonTextureRegion = TextureRegionFactory.extractFromTexture(mAddTexture);
-			this.mAddDarkButtonTextureRegion = TextureRegionFactory.extractFromTexture(mAddDarkTexture);
+			//this.mAddButtonTextureRegion = TextureRegionFactory.extractFromTexture(mAddTexture);
+			
 			this.mDelButtonTextureRegion = TextureRegionFactory.extractFromTexture(mDeleteTexture);
+			
+
+			this.mBitmapDarkAddButtonTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 600, 150, TextureOptions.BILINEAR);
+			this.mDarkAddButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapDarkAddButtonTextureAtlas, this, "add_whale_dark_tiled.png", 0, 0, 4, 1);
+			
+			this.mBitmapAddButtonTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 600, 150, TextureOptions.BILINEAR);
+			this.mAddButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapAddButtonTextureAtlas, this, "add_whale_tiled.png", 0, 0, 4, 1);
+			
 			//load textures
 			mBackgroundTexture.load();
 			//mTaskTexture.load();
-			mAddTexture.load();
-			mAddDarkTexture.load();
+			//mAddTexture.load();
+			//mAddDarkTexture.load();
 			mDeleteTexture.load();
 			mBitmapTextureAtlas.load();
 			mBitmapDarkTextureAtlas.load();
+			mBitmapAddButtonTextureAtlas.load();
+			mBitmapDarkAddButtonTextureAtlas.load();
 			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -319,7 +329,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 //			}
 //		};
 		
-		mAddButton = new Sprite(mCamera.getWidth()/2 - 2*mAddButtonTextureRegion.getWidth() , mCamera.getHeight() - this.mAddButtonTextureRegion.getHeight(), this.mAddButtonTextureRegion, this.getVertexBufferObjectManager()) {
+		mAddButton = new AnimatedSprite(mCamera.getWidth()/2 - 2*mAddButtonTextureRegion.getWidth() , mCamera.getHeight() - this.mAddButtonTextureRegion.getHeight(), this.mAddButtonTextureRegion, this.getVertexBufferObjectManager()) {
 			@Override
 			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
 				
@@ -354,6 +364,8 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 				return true;
 			}
 		};
+		long[] animateLengths = {1000l,500l,500l,500l};
+		mAddButton.animate(animateLengths);
 		hud.registerTouchArea(mAddButton);
 		hud.attachChild(mAddButton);
 		
@@ -391,7 +403,7 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 		/**
 		 * Donkere knop voor andere categorie met donkere bubbels.
 		 */
-		mAddDarkButton = new Sprite(mCamera.getWidth()/2 + mAddDarkButtonTextureRegion.getWidth(), mCamera.getHeight() - this.mAddDarkButtonTextureRegion.getHeight(), this.mAddDarkButtonTextureRegion, this.getVertexBufferObjectManager()) {
+		mDarkAddButton = new AnimatedSprite(mCamera.getWidth()/2 + mDarkAddButtonTextureRegion.getWidth(), mCamera.getHeight() - this.mDarkAddButtonTextureRegion.getHeight(), this.mDarkAddButtonTextureRegion, this.getVertexBufferObjectManager()) {
 			@Override
 			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
 				
@@ -419,15 +431,17 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 					
 					
 					//terugzetten van knop
-					this.setPosition(mCamera.getWidth()/2 + mAddDarkButtonTextureRegion.getWidth(), mCamera.getHeight() - mAddDarkButtonTextureRegion.getHeight());
+					this.setPosition(mCamera.getWidth()/2 + mDarkAddButtonTextureRegion.getWidth(), mCamera.getHeight() - mDarkAddButtonTextureRegion.getHeight());
 				} else {
 					this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
 				}
 				return true;
 			}
 		};
-		hud.registerTouchArea(mAddDarkButton);
-		hud.attachChild(mAddDarkButton);
+		long[] animateLengthsDark = {1200l,500l,400l,500l};
+		mDarkAddButton.animate(animateLengthsDark);
+		hud.registerTouchArea(mDarkAddButton);
+		hud.attachChild(mDarkAddButton);
 		
 //		mZoomCamera.setZoomFactor(1.5f);
 		
@@ -498,8 +512,8 @@ public class Visualtasks extends SimpleBaseGameActivity  implements OnDismissLis
 						mCamera.getHUD().clearTouchAreas();
 						mCamera.getHUD().attachChild(mAddButton);
 						mCamera.getHUD().registerTouchArea(mAddButton);
-						mCamera.getHUD().attachChild(mAddDarkButton);
-						mCamera.getHUD().registerTouchArea(mAddDarkButton);
+						mCamera.getHUD().attachChild(mDarkAddButton);
+						mCamera.getHUD().registerTouchArea(mDarkAddButton);
 					}
 				});
 			}
